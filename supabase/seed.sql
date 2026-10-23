@@ -2,7 +2,7 @@
 -- Depois disso, tudo pode ser alterado pelo painel (/admin > Dados da loja).
 
 update public.store_settings set
-  name = 'Empório Frades',
+  name = 'Empório Frade’s',
   tagline = 'Vinhos, espumantes, cervejas especiais e destilados na Avenida do Cursino, com a prateleira cheia e gente que entende do assunto.',
   about = 'Um empório de bairro na Vila da Saúde, com rótulos do mundo inteiro: tintos, brancos e rosés, espumantes para brindar, cervejas especiais, destilados, taças e acessórios. Passe para conhecer ou ligue para saber se temos o que você procura.',
   street = 'Av. do Cursino',
@@ -11,6 +11,8 @@ update public.store_settings set
   city = 'São Paulo',
   state = 'SP',
   zip = '04133-000',
+  latitude = -23.6037774,
+  longitude = -46.6153218,
   phone = '1135429564',
   whatsapp = '',
   instagram = 'emporiofrades_',

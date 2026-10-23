@@ -17,6 +17,7 @@ import {
   socialList,
 } from '../lib/views';
 import { toHTML } from '../lib/vnode';
+import { asset } from '../lib/paths';
 
 const cfg = readConfig();
 
@@ -50,7 +51,7 @@ const jsonLd = {
   name: s.name,
   description: s.tagline,
   url: Astro.site?.toString(),
-  image: new URL('/media/salao-1360.webp', Astro.site).toString(),
+  image: new URL(asset('media/salao-1360.webp'), Astro.site).toString(),
   telephone: s.phone ? `+55${s.phone}` : undefined,
   address: {
     '@type': 'PostalAddress',
@@ -80,7 +81,7 @@ const ext = { target: '_blank', rel: 'noopener noreferrer' };
   description={`${s.tagline} ${fullAddress(s)}.`}
   jsonLd={jsonLd}
 >
-  <noscript><link rel="stylesheet" href="/noscript.css" /></noscript>
+  <noscript><link rel="stylesheet" href={asset('noscript.css')} /></noscript>
   <a class="skip" href="#conteudo">Pular para o conteúdo</a>
 
   {!cfg.enabled && <p class="demo-banner" role="note">Modo demonstração: promoções e produtos são exemplos. Configure o Supabase para editar pelo painel.</p>}
@@ -115,7 +116,7 @@ const ext = { target: '_blank', rel: 'noopener noreferrer' };
     <section class="hero wrap" id="topo" aria-labelledby="hero-title">
       <h1 class="hero__name" id="hero-title" data-hero-name>
         <span class="hero__line"><span>Empório</span></span>
-        <span class="hero__line hero__line--right"><span>Frades</span></span>
+        <span class="hero__line hero__line--right"><span>Frade’s</span></span>
       </h1>
 
       <div class="hero__base" data-hero-base>
@@ -144,12 +145,12 @@ const ext = { target: '_blank', rel: 'noopener noreferrer' };
 
     <figure class="storefront">
       <img
-        src="/media/salao-1360.webp"
-        srcset="/media/salao-800.webp 800w, /media/salao-1360.webp 1360w"
+        src={asset('media/salao-1360.webp')}
+        srcset={`${asset('media/salao-800.webp')} 800w, ${asset('media/salao-1360.webp')} 1360w`}
         sizes="100vw"
         width="1360"
         height="570"
-        alt="Salão do Empório Frades, com gôndolas e paredes de prateleiras cheias de vinhos e uma mesa de espumantes no centro"
+        alt="Salão do Empório Frade’s, com gôndolas e paredes de prateleiras cheias de vinhos e uma mesa de espumantes no centro"
         fetchpriority="high"
         decoding="async"
       />
@@ -195,8 +196,8 @@ const ext = { target: '_blank', rel: 'noopener noreferrer' };
         <p class="about__text" data-bind="about">{s.about}</p>
         <figure class="about__photo">
           <img
-            src="/media/vinhos-960.webp"
-            srcset="/media/vinhos-560.webp 560w, /media/vinhos-960.webp 960w"
+            src={asset('media/vinhos-960.webp')}
+            srcset={`${asset('media/vinhos-560.webp')} 560w, ${asset('media/vinhos-960.webp')} 960w`}
             sizes="(max-width: 860px) 100vw, 40vw"
             width="960"
             height="938"
@@ -277,7 +278,7 @@ const ext = { target: '_blank', rel: 'noopener noreferrer' };
 
   <footer class="footer awning on-bottle">
     <div class="wrap">
-      <p class="footer__name" aria-hidden="true">Frades</p>
+      <p class="footer__name" aria-hidden="true">Frade’s</p>
       <div class="footer__grid">
         <div>
           <h2>Endereço</h2>

@@ -33,7 +33,7 @@ export interface FakeState {
 }
 
 export const baseSettings = {
-  name: 'Empório Frades',
+  name: 'Empório Frade’s',
   tagline: 'Frase vinda do banco.',
   about: 'Sobre vindo do banco.',
   street: 'Rua das Oliveiras',

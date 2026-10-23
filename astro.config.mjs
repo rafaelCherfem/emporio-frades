@@ -21,8 +21,14 @@ function securityHeaders() {
 }
 
 // Sem scripts ou estilos embutidos no HTML: assim a CSP pode proibir 'unsafe-inline'.
+// Domínio e subcaminho configuráveis: GitHub Pages usa /emporio-frades/,
+// Cloudflare ou domínio próprio usam a raiz.
+const site = process.env['SITE_URL'] ?? 'https://emporiofrades.com.br';
+const base = process.env['BASE_PATH'] ?? '/';
+
 export default defineConfig({
-  site: 'https://emporiofrades.com.br',
+  site,
+  base,
   output: 'static',
   trailingSlash: 'ignore',
   build: { inlineStylesheets: 'never', format: 'directory' },

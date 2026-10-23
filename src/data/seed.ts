@@ -6,7 +6,7 @@ import type { SiteContent, StoreSettings } from '../lib/schemas';
  * painel; mantenha este arquivo atualizado só como rede de segurança.
  */
 export const storeSettings: StoreSettings = {
-  name: 'Empório Frades',
+  name: 'Empório Frade’s',
   tagline: 'Vinhos, espumantes, cervejas especiais e destilados na Avenida do Cursino, com a prateleira cheia e gente que entende do assunto.',
   about:
     'Um empório de bairro na Vila da Saúde, com rótulos do mundo inteiro: tintos, brancos e rosés, espumantes para brindar, cervejas especiais, destilados, taças e acessórios. Passe para conhecer ou ligue para saber se temos o que você procura.',
@@ -17,8 +17,8 @@ export const storeSettings: StoreSettings = {
   state: 'SP',
   zip: '04133-000',
   reference: '',
-  latitude: null,
-  longitude: null,
+  latitude: -23.6037774,
+  longitude: -46.6153218,
   phone: '1135429564',
   whatsapp: '',
   whatsapp_message: '',

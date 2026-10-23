@@ -1,9 +1,10 @@
 ---
 import Base from '../../layouts/Base.astro';
 import '../../styles/admin.css';
+import { asset } from '../../lib/paths';
 ---
 
-<Base title="Painel | Empório Frades" description="Área restrita do Empório Frades." noindex>
+<Base title="Painel | Empório Frade’s" description="Área restrita do Empório Frade’s." noindex admin>
   <div class="admin">
     <section data-view="loading" class="center">
       <p class="muted">Carregando…</p>
@@ -15,7 +16,7 @@ import '../../styles/admin.css';
     </section>
 
     <section data-view="login" class="center card" hidden>
-      <p class="admin__brand">Empório Frades</p>
+      <p class="admin__brand">Empório Frade’s</p>
       <h1 tabindex="-1">Entrar no painel</h1>
       <form data-login-form class="stack" novalidate>
         <div class="field">
@@ -57,7 +58,7 @@ import '../../styles/admin.css';
 
     <div data-view="app" class="app" hidden>
       <header class="topbar">
-        <p class="admin__brand">Empório Frades <span class="muted">painel</span></p>
+        <p class="admin__brand">Empório Frade’s <span class="muted">painel</span></p>
         <nav class="tabs" aria-label="Seções do painel">
           <a href="#promotions" data-tab="promotions">Promoções</a>
           <a href="#highlights" data-tab="highlights">Em alta</a>
@@ -65,7 +66,7 @@ import '../../styles/admin.css';
           <a href="#settings" data-tab="settings">Dados da loja</a>
         </nav>
         <div class="topbar__user">
-          <a class="btn btn--ghost btn--s" href="/" target="_blank" rel="noopener">Ver site</a>
+          <a class="btn btn--ghost btn--s" href={asset('')} target="_blank" rel="noopener">Ver site</a>
           <span class="muted topbar__email" data-user-email></span>
           <button class="btn btn--ghost btn--s" type="button" data-logout>Sair</button>
         </div>

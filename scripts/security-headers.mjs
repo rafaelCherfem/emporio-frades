@@ -12,10 +12,11 @@ export function supabaseOrigin(supabaseUrl) {
 }
 
 /**
- * @param {{ supabaseUrl?: string, admin?: boolean }} opts
+ * @param {{ supabaseUrl?: string, admin?: boolean, meta?: boolean }} opts
+ *   meta: versão para <meta http-equiv>, que não aceita frame-ancestors
  * @returns {string}
  */
-export function buildCsp({ supabaseUrl, admin = false } = {}) {
+export function buildCsp({ supabaseUrl, admin = false, meta = false } = {}) {
   const sb = supabaseOrigin(supabaseUrl);
   const directives = {
     'default-src': ["'self'"],
@@ -35,6 +36,7 @@ export function buildCsp({ supabaseUrl, admin = false } = {}) {
     'trusted-types': ["'none'"],
     'upgrade-insecure-requests': [],
   };
+  if (meta) delete directives['frame-ancestors'];
   return Object.entries(directives)
     .map(([k, v]) => (v.length ? `${k} ${v.join(' ')}` : k))
     .join('; ');

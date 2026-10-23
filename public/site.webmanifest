@@ -1,12 +1,13 @@
 {
-  "name": "Empório Frades",
-  "short_name": "Frades",
-  "start_url": "/",
+  "name": "Empório Frade’s",
+  "short_name": "Frade’s",
+  "start_url": "./",
+  "scope": "./",
   "display": "browser",
   "background_color": "#e8ebe2",
-  "theme_color": "#1e3b2f",
+  "theme_color": "#1b4426",
   "icons": [
-    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" },
-    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
   ]
 }

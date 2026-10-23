@@ -9,6 +9,8 @@ import { headersFor } from './security-headers.mjs';
 const root = resolve(process.env['DIST'] ?? 'dist');
 const port = Number(process.argv[2] ?? process.env['PORT'] ?? 4322);
 const supabaseUrl = process.env['PUBLIC_SUPABASE_URL'];
+// Subcaminho opcional (ex.: BASE=/emporio-frades para simular o GitHub Pages)
+const base = (process.env['BASE'] ?? '').replace(/\/$/, '');
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -28,6 +30,13 @@ const TYPES = {
 createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://localhost');
   let pathname = decodeURIComponent(url.pathname);
+  if (base) {
+    if (!pathname.startsWith(base)) {
+      res.writeHead(404).end();
+      return;
+    }
+    pathname = pathname.slice(base.length) || '/';
+  }
   let file = normalize(join(root, pathname));
   if (!file.startsWith(root)) {
     res.writeHead(400).end();

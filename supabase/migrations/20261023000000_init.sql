@@ -1,4 +1,4 @@
--- Empório Frades: esquema inicial
+-- Empório Frade’s: esquema inicial
 -- Rode no SQL Editor do Supabase (ou `supabase db push`).
 -- Princípio: o público só LÊ o que está publicado; só quem está em `admins` escreve.
 
@@ -66,7 +66,7 @@ $$;
 -- ---------------------------------------------------------------
 create table if not exists public.store_settings (
   id smallint primary key default 1 check (id = 1),
-  name text not null default 'Empório Frades' check (char_length(name) between 1 and 80),
+  name text not null default 'Empório Frade’s' check (char_length(name) between 1 and 80),
   tagline text not null default '' check (char_length(tagline) <= 160),
   about text not null default '' check (char_length(about) <= 1200),
   street text not null default '' check (char_length(street) <= 120),

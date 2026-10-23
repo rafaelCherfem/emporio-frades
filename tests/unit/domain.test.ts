@@ -93,7 +93,8 @@ describe('dados reais da loja', () => {
     expect(l.phoneLabel).toBe('(11) 3542-9564');
     expect(l.whatsapp).toBeNull();
     expect(l.instagram).toBe('https://www.instagram.com/emporiofrades_/');
-    expect(l.maps).toContain(encodeURIComponent('Av. do Cursino, 129'));
+    expect(l.maps).toContain(encodeURIComponent('-23.6037774,-46.6153218'));
+    expect(l.waze).toBe('https://waze.com/ul?ll=-23.6037774,-46.6153218&navigate=yes');
   });
 });
 

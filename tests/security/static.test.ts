@@ -50,6 +50,16 @@ describe('Content-Security-Policy', () => {
   });
 });
 
+describe('CSP por <meta> (GitHub Pages)', () => {
+  it('mesma política, sem frame-ancestors (que <meta> não aceita)', () => {
+    const meta: string = buildCsp({ supabaseUrl: 'https://abc.supabase.co', meta: true });
+    expect(meta).not.toContain('frame-ancestors');
+    expect(meta).toContain("script-src 'self'");
+    expect(meta).toContain("require-trusted-types-for 'script'");
+    expect(meta).not.toMatch(/unsafe-inline|unsafe-eval/);
+  });
+});
+
 describe('arquivo _headers', () => {
   const file: string = renderHeadersFile({ supabaseUrl: 'https://abc.supabase.co' });
 
