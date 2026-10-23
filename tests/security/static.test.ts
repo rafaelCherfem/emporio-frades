@@ -1,7 +1,6 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-// @ts-expect-error módulo .mjs sem tipos
 import { buildCsp, headersFor, renderHeadersFile } from '../../scripts/security-headers.mjs';
 import { readConfig } from '../../src/lib/config';
 

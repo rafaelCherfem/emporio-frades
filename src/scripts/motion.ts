@@ -60,10 +60,18 @@ function buildRail(): (() => void) | null {
     return null;
   }
 
+  // Fixa quando o título da seção encosta logo abaixo do cabeçalho (o respiro
+  // superior da seção passa por baixo dele), para nada ficar escondido.
+  const offset = () => {
+    const header = document.querySelector<HTMLElement>('[data-header]')?.offsetHeight ?? 0;
+    const padTop = parseFloat(getComputedStyle(section).paddingTop) || 0;
+    return Math.max(0, padTop - header - 56);
+  };
+
   const tween = gsap.to(track, { x: () => -distance(), ease: 'none' });
   const pin = ScrollTrigger.create({
     trigger: section,
-    start: 'top top',
+    start: () => `top+=${offset()} top`,
     end: () => `+=${distance()}`,
     pin: true,
     scrub: 0.8,
