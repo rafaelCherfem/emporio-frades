@@ -92,7 +92,8 @@ function initLogin() {
       error.hidden = false;
       return;
     }
-    await sb.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/admin/` });
+    // Volta para esta mesma página do painel (funciona na raiz ou em subpasta, ex. GitHub Pages)
+    await sb.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}${location.pathname}` });
     // Mesma resposta exista ou não a conta (não revela quem está cadastrado)
     error.hidden = true;
     toast('Se esse e-mail estiver cadastrado, você vai receber um link para criar uma nova senha.');
