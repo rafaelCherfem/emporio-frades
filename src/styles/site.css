@@ -22,7 +22,7 @@ html {
 
 body {
   margin: 0;
-  background: var(--paper);
+  background: var(--paper) url('../assets/grain.svg') 0 0 / 240px 240px;
   color: var(--ink);
   font-family: var(--font-text);
   font-size: var(--step-0);
@@ -120,6 +120,19 @@ a:hover {
   line-height: 1;
   letter-spacing: -0.028em;
   text-wrap: balance;
+}
+
+.section-title .w {
+  display: inline-block;
+  overflow: clip;
+  overflow-clip-margin: 0.15em;
+  padding-bottom: 0.1em;
+  margin-bottom: -0.1em;
+  vertical-align: top;
+}
+
+.section-title .w > span {
+  display: inline-block;
 }
 
 .section-lead {
@@ -348,7 +361,20 @@ a:hover {
 
 .hero {
   position: relative;
+  isolation: isolate;
   padding-block: clamp(2rem, 1rem + 4vw, 4.5rem) clamp(3rem, 2rem + 5vw, 6rem);
+}
+
+/* Luz vindo de cima, à esquerda (mesma direção do relevo das letras) */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: -6rem calc(50% - 50vw) 0;
+  z-index: -1;
+  background:
+    radial-gradient(60% 70% at 28% 22%, rgb(255 255 250 / 0.75), transparent 70%),
+    radial-gradient(50% 60% at 85% 75%, rgb(31 94 44 / 0.07), transparent 70%);
+  pointer-events: none;
 }
 
 /* Profundidade do relevo: registrada para poder animar (abertura em CSS, scroll no GSAP) */
@@ -537,33 +563,84 @@ a:hover {
 }
 
 .storefront img {
+  /* 12% de sobra em cima e embaixo para a paralaxe nunca mostrar borda */
+  position: absolute;
+  top: -12%;
+  left: 0;
   width: 100%;
-  height: 100%;
+  height: 124%;
   object-fit: cover;
   object-position: 50% 45%;
+  will-change: transform;
 }
 
-/* Toldo: arte vetorial (src/assets/awning.svg) repetida em gomos inteiros.
-   A sombra projetada cai sobre a foto; o GSAP balança de leve no scroll. */
+/* Toldo: barra contínua + costura (CSS) e gomos independentes (SVG), para cada
+   gomo poder tremular com o vento e ondular no scroll. */
 .valance {
+  --h: clamp(48px, 2.4rem + 1.8vw, 76px);
   position: absolute;
-  inset: 0 -2% auto;
-  height: clamp(48px, 2.4rem + 1.8vw, 76px);
-  /* Camadas: gomos (SVG repetido) / costura dourada / barra superior contínua */
+  inset: 0 0 auto;
+  z-index: 1;
+  display: flex;
+  height: var(--h);
+  overflow: visible;
   background:
-    url('../assets/awning.svg') 0 0 / auto 100% round no-repeat,
     repeating-linear-gradient(90deg, rgb(237 197 110 / 0.75) 0 4px, transparent 4px 8px) 0 17.5% / 100% 1px no-repeat,
     linear-gradient(#2b7442, #22652f 55%, #1c562a) 0 0 / 100% 35.5% no-repeat;
   filter: drop-shadow(0 9px 7px rgb(6 24 11 / 0.42)) drop-shadow(0 2px 1px rgb(6 24 11 / 0.3));
-  transform-origin: 50% 0;
-  z-index: 1;
   pointer-events: none;
+}
+
+.valance__gore {
+  flex: 0 0 auto;
+  height: 100%;
+  aspect-ratio: 64 / 48;
+  margin-right: -0.5px;
+  transform-origin: 50% 33%;
+}
+
+.valance__gore > span {
+  display: block;
+  height: 100%;
+  background: url('../assets/awning.svg') 0 0 / 100% 100% no-repeat;
+  transform-origin: 50% 33%;
+}
+
+/* Vento: cada gomo tremula num ritmo levemente diferente */
+@media (prefers-reduced-motion: no-preference) {
+  .valance__gore > span {
+    animation: gore-wind 3.6s ease-in-out infinite alternate;
+  }
+
+  .valance__gore:nth-child(2n) > span {
+    animation-duration: 4.2s;
+    animation-delay: -1.3s;
+  }
+
+  .valance__gore:nth-child(3n) > span {
+    animation-duration: 3.1s;
+    animation-delay: -2.1s;
+  }
+
+  .valance__gore:nth-child(5n) > span {
+    animation-duration: 4.8s;
+    animation-delay: -0.6s;
+  }
+}
+
+@keyframes gore-wind {
+  0% {
+    transform: rotate(-1.4deg) scaleY(0.985);
+  }
+  100% {
+    transform: rotate(1.4deg) scaleY(1.02);
+  }
 }
 
 /* ---------- Promoções ---------- */
 
 .promos {
-  background: var(--bottle);
+  background: var(--bottle) url('../assets/grain-light.svg') 0 0 / 240px 240px;
   color: var(--on-bottle);
   padding-block: var(--section);
 }
@@ -618,7 +695,12 @@ a:hover {
 .rail__track {
   display: flex;
   gap: clamp(1rem, 0.6rem + 1.4vw, 2rem);
-  padding: 1.25rem var(--gutter) 2rem;
+  padding: 2.6rem var(--gutter) 2rem;
+  /* Corda do varal (torcida) e a sombra dela; "local" faz a corda rolar junto */
+  background:
+    repeating-linear-gradient(118deg, #d8b37a 0 3px, #a87b45 3px 5px, #c79c62 5px 7px) 0 1.15rem / 100% 5px no-repeat,
+    linear-gradient(rgb(0 0 0 / 0.28), rgb(0 0 0 / 0)) 0 calc(1.15rem + 5px) / 100% 6px no-repeat;
+  background-attachment: local, local;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scroll-padding-inline: var(--gutter);
@@ -636,10 +718,45 @@ a:hover {
 /* Etiqueta de gôndola */
 .tag {
   --tilt: -1.2deg;
+  position: relative;
   flex: 0 0 clamp(15.5rem, 13rem + 8vw, 19.5rem);
   scroll-snap-align: start;
   transform: rotate(var(--tilt));
-  transform-origin: 50% 0;
+  transform-origin: 50% -1.2rem;
+}
+
+/* Prendedor de madeira segurando a etiqueta na corda */
+.tag::before {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  top: -2.05rem;
+  left: 50%;
+  width: 0.95rem;
+  height: 2.9rem;
+  margin-left: -0.475rem;
+  border-radius: 3px 3px 4px 4px;
+  background:
+    linear-gradient(90deg, rgb(0 0 0 / 0.22), transparent 30%, rgb(255 255 255 / 0.18) 55%, transparent 75%, rgb(0 0 0 / 0.25)),
+    linear-gradient(#d9a868, #b9844a);
+  box-shadow:
+    0 3px 5px -1px rgb(0 0 0 / 0.45),
+    inset 0 0 0 1px rgb(80 45 15 / 0.35);
+}
+
+/* Mola de metal do prendedor */
+.tag::after {
+  content: '';
+  position: absolute;
+  z-index: 3;
+  top: -0.95rem;
+  left: 50%;
+  width: 1.35rem;
+  height: 0.32rem;
+  margin-left: -0.675rem;
+  border-radius: 2px;
+  background: linear-gradient(#e6e9ea, #8d9599 60%, #c3c9cc);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.4);
 }
 
 .tag:nth-child(3n + 2) {
@@ -655,8 +772,9 @@ a:hover {
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: min(21rem, 50vh);
-  padding: 1.6rem 1.4rem 1.3rem;
+  min-height: min(21rem, 52vh);
+  padding: 1.4rem 1.4rem 1.3rem;
+  transform-origin: 50% -1.2rem;
   background: var(--label);
   color: var(--ink);
   border-radius: 3px 3px 10px 10px;
@@ -666,17 +784,21 @@ a:hover {
 }
 
 /* Furo do clipe que prende a etiqueta na prateleira */
+/* Conteúdo da etiqueta acima da camada de brilho/grão */
+.tag__body > * {
+  position: relative;
+}
+
+/* Papel da etiqueta: leve brilho de cima e grão */
 .tag__body::before {
   content: '';
   position: absolute;
-  top: 0.65rem;
-  left: 50%;
-  width: 2.2rem;
-  height: 0.4rem;
-  margin-left: -1.1rem;
-  border-radius: var(--radius-pill);
-  background: var(--bottle);
-  opacity: 0.85;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(rgb(255 255 255 / 0.22), transparent 28%),
+    url('../assets/grain.svg') 0 0 / 240px 240px;
+  pointer-events: none;
 }
 
 .tag__photo {
@@ -988,7 +1110,7 @@ a:hover {
 /* ---------- Novidades (mural) ---------- */
 
 .news {
-  background: var(--paper-2);
+  background: var(--paper-2) url('../assets/grain.svg') 0 0 / 240px 240px;
   padding-block: var(--section);
 }
 
@@ -1215,7 +1337,7 @@ a:hover {
 /* ---------- Rodapé ---------- */
 
 .footer {
-  background: var(--bottle);
+  background: var(--bottle) url('../assets/grain-light.svg') 0 0 / 240px 240px;
   color: var(--on-bottle);
   padding-block: clamp(4rem, 3rem + 4vw, 6.5rem) 2rem;
   /* filete cobre logo abaixo da borda, como o quadro da placa */

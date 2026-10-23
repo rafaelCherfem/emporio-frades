@@ -2,34 +2,49 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 /**
- * Movimento com intenção:
- *  1. Letreiro (abertura em CSS): ao rolar, a placa inclina para trás em perspectiva,
- *     o relevo das letras cresce e as linhas se afastam, como um letreiro visto de
- *     baixo enquanto você passa pela calçada.
- *  2. Varal de promoções: trava SÓ quando as etiquetas estão inteiras na tela e corre
- *     na horizontal, com barra de progresso. Em telas baixas, vira rolagem lateral comum.
- *  3. Toldo e etiquetas balançam de leve com a velocidade da rolagem.
- * Com "reduzir movimento" ligado, nada disso roda.
+ * Movimento da página. Cada efeito roda isolado (safe): se um falhar num navegador,
+ * os outros continuam. Com "reduzir movimento" ligado, nada disso roda.
+ *
+ *  1. Letreiro: ao rolar, as duas linhas se separam em direções opostas, as letras se
+ *     espaçam e ondulam em sequência, ganham peso e relevo, e a placa tomba em perspectiva.
+ *  2. Foto do salão: paralaxe (a foto anda mais devagar que a página).
+ *  3. Toldo: uma onda percorre os gomos conforme a velocidade e a direção da rolagem.
+ *  4. Varal: a seção trava e as etiquetas correm penduradas na corda, balançando no prendedor.
+ *  5. Títulos de seção: palavras sobem de dentro de uma máscara ao entrar na tela.
  */
 
 const MOTION = '(prefers-reduced-motion: no-preference)';
-// Varal fixado só onde cabe: largura de desktop e altura suficiente para as etiquetas
-const RAIL = `${MOTION} and (min-width: 900px) and (min-height: 600px)`;
+const RAIL = `${MOTION} and (min-width: 900px)`;
 
 let mm: gsap.MatchMedia | null = null;
 let railCleanup: (() => void) | null = null;
+
+function safe(name: string, fn: () => void) {
+  try {
+    fn();
+  } catch (err) {
+    console.warn(`[movimento] "${name}" desativado:`, err);
+  }
+}
+
+const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector<T>(s);
+const headerH = () => $('[data-header]')?.offsetHeight ?? 0;
 
 export function initMotion() {
   gsap.registerPlugin(ScrollTrigger);
   mm = gsap.matchMedia();
 
   mm.add(MOTION, () => {
-    signScroll();
-    valanceSway();
+    safe('letreiro', signScroll);
+    safe('paralaxe', photoParallax);
+    safe('toldo', valanceWave);
+    safe('títulos', revealTitles);
   });
 
   mm.add(RAIL, () => {
-    railCleanup = buildRail();
+    safe('varal', () => {
+      railCleanup = buildRail();
+    });
     return () => {
       railCleanup?.();
       railCleanup = null;
@@ -40,64 +55,105 @@ export function initMotion() {
 /* ---------- 1. Letreiro ---------- */
 
 function signScroll() {
-  const name = document.querySelector<HTMLElement>('[data-hero-name]');
+  const name = $('[data-hero-name]');
   const lines = gsap.utils.toArray<HTMLElement>('[data-hero-line]');
   if (!name || lines.length < 2) return;
+  const chars = gsap.utils.toArray<HTMLElement>('.hero__char', name);
 
   const tl = gsap.timeline({
     defaults: { ease: 'none' },
-    scrollTrigger: { trigger: '#topo', start: 'top top', end: 'bottom top', scrub: 0.7 },
+    scrollTrigger: { trigger: '#topo', start: 'top top', end: 'bottom top', scrub: 0.8 },
   });
-  // Relevo cresce e as letras "amaciam" (eixo SOFT da Fraunces)
-  tl.fromTo(name, { '--d': 7, '--soft': 40 }, { '--d': 15, '--soft': 100 }, 0)
-    // A placa tomba para trás; a linha de cima mais, dando profundidade
-    .fromTo(lines[0]!, { rotateX: 0, yPercent: 0 }, { rotateX: 38, yPercent: -18 }, 0)
-    .fromTo(lines[1]!, { rotateX: 0, yPercent: 0, xPercent: 0 }, { rotateX: 24, yPercent: -10, xPercent: 2 }, 0)
-    .fromTo(name, { autoAlpha: 1 }, { autoAlpha: 0.25, ease: 'power1.in' }, 0.35);
+
+  tl.fromTo(
+    name,
+    { '--d': 7, '--soft': 40, fontWeight: 660, letterSpacing: '-0.035em' },
+    { '--d': 17, '--soft': 100, fontWeight: 840, letterSpacing: '0.025em', duration: 1 },
+    0,
+  )
+    // As linhas se abrem em direções opostas, como portas de um letreiro
+    .fromTo(lines[0]!, { xPercent: 0, yPercent: 0, rotateX: 0 }, { xPercent: -14, yPercent: -14, rotateX: 26, duration: 1 }, 0)
+    .fromTo(lines[1]!, { xPercent: 0, yPercent: 0, rotateX: 0 }, { xPercent: 9, yPercent: -4, rotateX: 14, duration: 1 }, 0)
+    // Onda que percorre as letras enquanto rola
+    .to(chars, { keyframes: { yPercent: [0, -16, 0], rotate: [0, -3, 0] }, duration: 0.5, stagger: { each: 0.035, from: 'start' } }, 0)
+    .to(name, { autoAlpha: 0.2, duration: 0.45, ease: 'power1.in' }, 0.55);
 }
 
-/* ---------- 3a. Toldo ---------- */
+/* ---------- 2. Paralaxe da foto ---------- */
 
-function valanceSway() {
-  const valance = document.querySelector<HTMLElement>('[data-valance]');
-  const photo = document.querySelector<HTMLElement>('[data-storefront]');
-  if (!valance || !photo) return;
-  const skew = gsap.quickTo(valance, 'skewX', { duration: 0.9, ease: 'power3.out' });
-  const lift = gsap.quickTo(valance, 'scaleY', { duration: 0.9, ease: 'power3.out' });
+function photoParallax() {
+  const fig = $('[data-storefront]');
+  const img = fig?.querySelector('img');
+  if (!fig || !img) return;
+  gsap.fromTo(
+    img,
+    { yPercent: -9, scale: 1.06 },
+    { yPercent: 9, scale: 1, ease: 'none', scrollTrigger: { trigger: fig, start: 'top bottom', end: 'bottom top', scrub: true } },
+  );
+}
+
+/* ---------- 3. Toldo ---------- */
+
+function valanceWave() {
+  const fig = $('[data-storefront]');
+  const gores = gsap.utils.toArray<HTMLElement>('.valance__gore');
+  if (!fig || !gores.length) return;
+
+  let last = 0;
+  let current: gsap.core.Timeline | null = null;
+
+  const wave = (velocity: number) => {
+    const now = performance.now();
+    if (Math.abs(velocity) < 120 || now - last < 160) return;
+    last = now;
+    const strength = gsap.utils.clamp(0.25, 1, Math.abs(velocity) / 2200);
+    const dir = velocity > 0 ? 1 : -1; // descendo = vento empurra para trás
+    const from = dir > 0 ? 'start' : 'end';
+    current?.kill();
+    current = gsap
+      .timeline()
+      .to(gores, {
+        rotation: -dir * 9 * strength,
+        skewX: dir * 5 * strength,
+        scaleY: 1 + 0.07 * strength,
+        duration: 0.32,
+        ease: 'power2.out',
+        stagger: { each: 0.014, from },
+      })
+      .to(
+        gores,
+        {
+          rotation: 0,
+          skewX: 0,
+          scaleY: 1,
+          duration: 1.5,
+          ease: 'elastic.out(1, 0.32)',
+          stagger: { each: 0.014, from },
+        },
+        0.3,
+      );
+  };
+
   ScrollTrigger.create({
-    trigger: photo,
+    trigger: fig,
     start: 'top bottom',
     end: 'bottom top',
-    onUpdate(self) {
-      const v = gsap.utils.clamp(-1, 1, self.getVelocity() / -2500);
-      skew(v * 2.2); // tecido arrasta para o lado oposto do movimento
-      lift(1 + Math.abs(v) * 0.06); // e "infla" um pouco com o vento
-    },
-    onToggle(self) {
-      if (!self.isActive) {
-        skew(0);
-        lift(1);
-      }
-    },
+    onUpdate: (self) => wave(self.getVelocity()),
   });
 }
 
-/* ---------- 2. Varal de promoções ---------- */
+/* ---------- 4. Varal de promoções ---------- */
 
 function buildRail(): (() => void) | null {
-  const section = document.querySelector<HTMLElement>('[data-promos]');
-  const wrap = document.querySelector<HTMLElement>('[data-rail]');
+  const section = $('[data-promos]');
+  const wrap = $('[data-rail]');
   const track = wrap?.querySelector<HTMLElement>('.rail__track');
-  const bar = document.querySelector<HTMLElement>('[data-rail-progress]');
+  const bar = $('[data-rail-progress]');
   if (!section || !wrap || !track || wrap.hidden) return null;
 
   wrap.dataset['pinned'] = 'true';
   const distance = () => Math.max(0, track.scrollWidth - document.documentElement.clientWidth);
-  const headerH = () => document.querySelector<HTMLElement>('[data-header]')?.offsetHeight ?? 0;
-
-  // Só trava se as etiquetas cabem inteiras entre o cabeçalho e o rodapé da tela
-  const fits = () => wrap.offsetHeight + headerH() + 24 <= window.innerHeight;
-  if (distance() < 40 || !fits()) {
+  if (distance() < 40) {
     wrap.dataset['pinned'] = 'false';
     return null;
   }
@@ -105,36 +161,43 @@ function buildRail(): (() => void) | null {
   const tween = gsap.to(track, { x: () => -distance(), ease: 'none' });
   if (bar) tween.eventCallback('onUpdate', () => gsap.set(bar, { scaleX: tween.progress() }));
 
-  // Início: só quando o PÉ do varal (etiquetas + barra) encosta no rodapé da tela,
-  // com folga. Assim as etiquetas já estão inteiras quando começam a correr.
+  // Início: quando as etiquetas estão inteiras na tela (pé do varal no rodapé).
+  // Se a tela for baixa demais para isso, alinha o topo do varal logo abaixo do cabeçalho.
+  const fits = () => wrap.offsetHeight + headerH() + 24 <= window.innerHeight;
   const pin = ScrollTrigger.create({
     trigger: wrap,
     pin: section,
-    start: 'bottom bottom-=32',
-    end: () => `+=${distance()}`,
+    start: () => (fits() ? 'bottom bottom-=24' : `top top+=${headerH() + 8}`),
+    // percurso de rolagem um pouco maior que o deslocamento: movimento mais cadenciado
+    end: () => `+=${Math.round(distance() * 1.35)}`,
     scrub: 0.8,
     animation: tween,
     invalidateOnRefresh: true,
     anticipatePin: 1,
   });
 
-  // Etiquetas balançam com a velocidade (corpo da etiqueta; a inclinação fixa fica no <li>)
+  // Etiquetas balançam a partir do prendedor, conforme a velocidade
   const bodies = gsap.utils.toArray<HTMLElement>('.tag__body', track);
-  const swing = bodies.map((b) => gsap.quickTo(b, 'rotation', { duration: 0.7, ease: 'power3.out' }));
+  // Um único controle por etiqueta (quickTo) para balançar e para voltar ao lugar:
+  // a curva elástica dá o vaivém natural quando a rolagem para.
+  const swing = bodies.map((b) => gsap.quickTo(b, 'rotation', { duration: 1.1, ease: 'elastic.out(1, 0.45)' }));
   const sway = ScrollTrigger.create({
     trigger: section,
     start: 'top bottom',
     end: 'bottom top',
     onUpdate(self) {
-      const v = gsap.utils.clamp(-3.5, 3.5, self.getVelocity() / -450);
-      swing.forEach((fn, i) => fn(v * (i % 2 ? 1 : 0.7)));
+      const v = gsap.utils.clamp(-6, 6, self.getVelocity() / -300);
+      swing.forEach((fn, i) => fn(v * (i % 2 ? 1 : 0.75)));
     },
     onToggle(self) {
       if (!self.isActive) swing.forEach((fn) => fn(0));
     },
   });
+  const settle = () => swing.forEach((fn) => fn(0));
+  ScrollTrigger.addEventListener('scrollEnd', settle);
 
   return () => {
+    ScrollTrigger.removeEventListener('scrollEnd', settle);
     sway.kill();
     pin.kill(true);
     tween.kill();
@@ -145,12 +208,30 @@ function buildRail(): (() => void) | null {
   };
 }
 
+/* ---------- 5. Títulos de seção ---------- */
+
+function revealTitles() {
+  for (const title of gsap.utils.toArray<HTMLElement>('[data-reveal]')) {
+    const words = title.querySelectorAll('.w > span');
+    gsap.from(words, {
+      yPercent: 115,
+      rotate: 5,
+      duration: 1.1,
+      ease: 'expo.out',
+      stagger: 0.07,
+      scrollTrigger: { trigger: title, start: 'top 88%', once: true },
+    });
+  }
+}
+
 /** Recalcula o varal depois que o conteúdo ao vivo substitui o de reserva. */
 export function refreshMotion() {
   if (!mm) return;
   if (window.matchMedia(RAIL).matches) {
     railCleanup?.();
-    railCleanup = buildRail();
+    safe('varal', () => {
+      railCleanup = buildRail();
+    });
   }
   ScrollTrigger.refresh();
 }

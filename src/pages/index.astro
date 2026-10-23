@@ -78,6 +78,12 @@ const ext = { target: '_blank', rel: 'noopener noreferrer' };
 // Letreiro: cada letra vira um elemento para a abertura e o relevo.
 // Leitores de tela leem o texto inteiro (sr-only); as letras ficam ocultas para eles.
 const signLines = ['Empório', 'Frade’s'].map((w) => [...w]);
+
+// Títulos de seção: cada palavra numa máscara, para a revelação no scroll
+const words = (t: string) => t.split(' ');
+
+// Gomos do toldo: suficientes para cobrir telas largas (o excesso fica fora da foto)
+const gores = Array.from({ length: 44 }, (_, i) => i);
 ---
 
 <Base
@@ -152,7 +158,9 @@ const signLines = ['Empório', 'Frade’s'].map((w) => [...w]);
     </section>
 
     <figure class="storefront" data-storefront>
-      <div class="valance" aria-hidden="true" data-valance></div>
+      <div class="valance" aria-hidden="true" data-valance>
+        {gores.map(() => <span class="valance__gore"><span></span></span>)}
+      </div>
       <img
         src={asset('media/salao-1360.webp')}
         srcset={`${asset('media/salao-800.webp')} 800w, ${asset('media/salao-1360.webp')} 1360w`}
@@ -168,7 +176,7 @@ const signLines = ['Empório', 'Frade’s'].map((w) => [...w]);
     <section class="promos on-bottle" id="promocoes" aria-labelledby="promos-title" data-promos>
       <div class="wrap promos__head">
         <div>
-          <h2 class="section-title" id="promos-title">Promoções da semana</h2>
+          <h2 class="section-title" id="promos-title" data-reveal>{words('Promoções da semana').map((w, i) => <>{i > 0 && ' '}<span class="w"><span>{w}</span></span></>)}</h2>
           <p class="section-lead">Preços válidos na loja enquanto durar o estoque. Para reservar, fale com a gente.</p>
         </div>
         <p class="promos__count" data-promo-count aria-live="polite" hidden={promos.length === 0}>
@@ -194,7 +202,7 @@ const signLines = ['Empório', 'Frade’s'].map((w) => [...w]);
     <section class="hot" id="em-alta" aria-labelledby="hot-title" data-hot hidden={highlights.length === 0}>
       <div class="wrap hot__grid">
         <div class="hot__intro">
-          <h2 class="section-title" id="hot-title">Os mais procurados</h2>
+          <h2 class="section-title" id="hot-title" data-reveal>{words('Os mais procurados').map((w, i) => <>{i > 0 && ' '}<span class="w"><span>{w}</span></span></>)}</h2>
           <p class="section-lead">O que a clientela mais tem levado. Confira o preço na etiqueta da loja.</p>
         </div>
         <ul class="menu" data-list="highlights" set:html={toHTML(highlights)} />
@@ -221,14 +229,14 @@ const signLines = ['Empório', 'Frade’s'].map((w) => [...w]);
 
     <section class="news" id="novidades" aria-labelledby="news-title" data-news hidden={news.length === 0}>
       <div class="wrap">
-        <h2 class="section-title" id="news-title">Novidades</h2>
+        <h2 class="section-title" id="news-title" data-reveal>{words('Novidades').map((w, i) => <>{i > 0 && ' '}<span class="w"><span>{w}</span></span></>)}</h2>
         <ol class="board" data-list="news" set:html={toHTML(news)} />
       </div>
     </section>
 
     <section class="visit" id="onde-estamos" aria-labelledby="visit-title">
       <div class="wrap">
-        <h2 class="section-title" id="visit-title">Onde estamos</h2>
+        <h2 class="section-title" id="visit-title" data-reveal>{words('Onde estamos').map((w, i) => <>{i > 0 && ' '}<span class="w"><span>{w}</span></span></>)}</h2>
 
         <div class="visit__grid">
           <div>
