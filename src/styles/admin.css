@@ -212,6 +212,11 @@ legend {
   object-fit: cover;
 }
 
+.image-field--wide .image-field__preview {
+  width: min(100%, 22rem);
+  aspect-ratio: 8 / 3;
+}
+
 .image-field__actions {
   display: flex;
   flex-wrap: wrap;
@@ -317,7 +322,7 @@ legend {
 
 .row {
   display: grid;
-  grid-template-columns: 3.5rem minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 1rem;
   padding-block: 0.9rem;
@@ -329,6 +334,10 @@ legend {
   height: 3.5rem;
   border-radius: var(--radius-s);
   object-fit: cover;
+}
+
+.row__thumb--wide {
+  width: 7rem;
 }
 
 .row__thumb--empty {
@@ -362,7 +371,7 @@ legend {
 
 @media (max-width: 640px) {
   .row {
-    grid-template-columns: 3rem minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
   .row__actions {

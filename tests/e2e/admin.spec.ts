@@ -94,6 +94,46 @@ test.describe('painel do dono', () => {
     expect(row.body).not.toHaveProperty('id');
   });
 
+  test('cria um banner: exige imagem e texto da arte, sobe na pasta de banners', async ({ page }) => {
+    const state = await fakeSupabase(page);
+    await login(page);
+    await page.getByRole('link', { name: 'Banners' }).click();
+    await expect(page.getByRole('heading', { name: 'Banners', level: 1 })).toBeVisible();
+    await page.getByRole('button', { name: 'Novo banner' }).click();
+    const dialog = page.getByRole('dialog');
+
+    await dialog.getByLabel('Nome do banner').fill('Espumantes de fim de ano');
+    await dialog.getByRole('button', { name: 'Publicar' }).click();
+    await expect(dialog.locator('#f-image_path-err')).toHaveText('Escolha a imagem.');
+    expect(state.inserts).toHaveLength(0);
+
+    await dialog.getByLabel('Imagem (computador)').setInputFiles({ name: 'arte.png', mimeType: 'image/png', buffer: await pngBuffer(page) });
+    await dialog.getByLabel('Ao tocar no banner, abrir').fill('javascript:alert(1)');
+    await dialog.getByRole('button', { name: 'Publicar' }).click();
+    await expect(dialog.locator('#f-image_alt-err')).toHaveText('Escreva o texto da arte.');
+    await expect(dialog.locator('#f-link_url-err')).toContainText('Use um endereço https://');
+
+    await dialog.getByLabel('O que o banner diz').fill('Espumantes com 15% de desconto');
+    await dialog.getByLabel('Ao tocar no banner, abrir').fill('#promocoes');
+    await dialog.getByRole('button', { name: 'Publicar' }).click();
+    await expect(page.getByRole('status').filter({ hasText: 'Publicado.' })).toBeVisible();
+
+    expect(state.uploads).toHaveLength(1);
+    expect(state.uploads[0]!.path).toMatch(/^banners\/\d{4}\/[0-9a-f-]{36}\.webp$/);
+    expect(state.inserts[0]).toMatchObject({
+      table: 'banners',
+      body: {
+        title: 'Espumantes de fim de ano',
+        image_path: state.uploads[0]!.path,
+        image_mobile_path: null,
+        image_alt: 'Espumantes com 15% de desconto',
+        link_url: '#promocoes',
+        published: true,
+        sort_order: 10,
+      },
+    });
+  });
+
   test('arquivo que não é imagem é recusado antes de subir', async ({ page }) => {
     const state = await fakeSupabase(page);
     await login(page);

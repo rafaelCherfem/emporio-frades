@@ -1,20 +1,21 @@
 import { isSafeImagePath } from '../../lib/safe';
+import type { ImageFolder } from './fields';
 
 /**
  * Prepara a foto escolhida no celular/computador antes de subir:
  *  - confere tipo e tamanho;
  *  - redesenha num canvas, o que REMOVE metadados (inclusive localização GPS);
- *  - reduz para no máximo 1600 px e converte para WebP (fica leve para o site).
+ *  - reduz para no máximo 1600 px (banners: 2200 px) e converte para WebP (fica leve para o site).
  */
 
 export const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
 const MAX_INPUT = 15 * 1024 * 1024;
-const MAX_OUTPUT = 2 * 1024 * 1024; // igual ao limite do bucket
+const MAX_OUTPUT = 3 * 1024 * 1024; // igual ao limite do bucket
 const MAX_SIDE = 1600;
 
 export class ImageError extends Error {}
 
-export async function prepareImage(file: File): Promise<Blob> {
+export async function prepareImage(file: File, maxSide = MAX_SIDE): Promise<Blob> {
   if (!ACCEPTED.includes(file.type)) {
     throw new ImageError('Use uma foto em JPG, PNG, WebP ou AVIF. Fotos do iPhone (HEIC): exporte como JPG antes.');
   }
@@ -27,7 +28,7 @@ export async function prepareImage(file: File): Promise<Blob> {
     throw new ImageError('Não foi possível abrir essa imagem. Ela pode estar corrompida.');
   }
 
-  const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
   const w = Math.round(bitmap.width * scale);
   const h = Math.round(bitmap.height * scale);
   const canvas = document.createElement('canvas');
@@ -51,7 +52,7 @@ export async function prepareImage(file: File): Promise<Blob> {
 }
 
 /** Caminho no bucket: pasta/ano/uuid.ext — nunca o nome original do arquivo. */
-export function imagePathFor(folder: 'promocoes' | 'destaques' | 'novidades', type: string): string {
+export function imagePathFor(folder: ImageFolder, type: string): string {
   const ext = type === 'image/jpeg' ? 'jpg' : 'webp';
   const path = `${folder}/${new Date().getFullYear()}/${crypto.randomUUID()}.${ext}`;
   if (!isSafeImagePath(path)) throw new ImageError('Caminho de imagem inválido.');

@@ -5,6 +5,7 @@ import { formatBRL, formatDateShort, isPromotionActive } from '../../lib/format'
 import { DAY_NAMES } from '../../lib/hours';
 import { imageUrl } from '../../lib/safe';
 import {
+  bannerSchema,
   highlightSchema,
   newsSchema,
   promotionSchema,
@@ -21,7 +22,7 @@ type Row = Record<string, unknown> & { id: string };
 const cfg = readConfig();
 let sb: SupabaseClient;
 
-const SCHEMAS = { promotions: promotionSchema, highlights: highlightSchema, news: newsSchema } as const;
+const SCHEMAS = { banners: bannerSchema, promotions: promotionSchema, highlights: highlightSchema, news: newsSchema } as const;
 
 /* =========================================================
    Telas
@@ -160,7 +161,7 @@ async function enter(session: Session | null) {
    ========================================================= */
 
 type Tab = Entity | 'settings';
-const TABS: Tab[] = ['promotions', 'highlights', 'news', 'settings'];
+const TABS: Tab[] = ['banners', 'promotions', 'highlights', 'news', 'settings'];
 
 function currentTab(): Tab {
   const t = location.hash.slice(1) as Tab;
@@ -184,9 +185,10 @@ function openTab(tab: Tab) {
 
 function statusOf(cfgE: EntityConfig, row: Row): { label: string; tone: 'on' | 'off' | 'warn' } {
   if (!row['published']) return { label: 'Rascunho', tone: 'off' };
-  if (cfgE.table === 'promotions') {
+  if (cfgE.table === 'promotions' || cfgE.table === 'banners') {
     const p = row as unknown as { published: boolean; starts_at: string | null; ends_at: string | null };
-    if (p.ends_at && new Date(p.ends_at) < new Date()) return { label: 'Encerrada', tone: 'warn' };
+    const f = cfgE.table === 'banners' ? 'o' : 'a';
+    if (p.ends_at && new Date(p.ends_at) < new Date()) return { label: `Encerrad${f}`, tone: 'warn' };
     if (p.starts_at && new Date(p.starts_at) > new Date()) return { label: `Começa ${formatDateShort(p.starts_at)}`, tone: 'warn' };
     if (isPromotionActive(p)) return { label: 'No site', tone: 'on' };
   }
@@ -213,6 +215,7 @@ async function renderEntity(panel: HTMLElement, cfgE: EntityConfig) {
   rows.forEach((row, i) => {
     const st = statusOf(cfgE, row);
     const thumb = imageUrl(row['image_path'], cfg.supabaseUrl);
+    const wide = cfgE.table === 'banners';
     const price = typeof row['price_cents'] === 'number' ? formatBRL(row['price_cents']) : null;
 
     list.append(
@@ -220,7 +223,7 @@ async function renderEntity(panel: HTMLElement, cfgE: EntityConfig) {
         'li',
         { class: 'row' },
         thumb
-          ? el('img', { class: 'row__thumb', attrs: { src: thumb, alt: '', width: 56, height: 56, loading: 'lazy' } })
+          ? el('img', { class: `row__thumb${wide ? ' row__thumb--wide' : ''}`, attrs: { src: thumb, alt: '', width: wide ? 112 : 56, height: 56, loading: 'lazy' } })
           : el('span', { class: 'row__thumb row__thumb--empty', attrs: { 'aria-hidden': 'true' } }),
         el(
           'div',
@@ -295,7 +298,10 @@ async function remove(cfgE: EntityConfig, row: Row) {
     toast(friendlyError(error), 'error');
     return;
   }
-  if (typeof row['image_path'] === 'string') await sb.storage.from('media').remove([row['image_path']]);
+  const files = imageFields(cfgE)
+    .map((f) => row[f.name])
+    .filter((v): v is string => typeof v === 'string' && v.length > 0);
+  if (files.length) await sb.storage.from('media').remove(files);
   toast('Apagado.');
   openTab(cfgE.table);
 }
@@ -303,6 +309,8 @@ async function remove(cfgE: EntityConfig, row: Row) {
 /* =========================================================
    Editor
    ========================================================= */
+
+const imageFields = (cfgE: EntityConfig) => cfgE.fields.filter((f) => f.type === 'image');
 
 function fieldId(name: string) {
   return `f-${name}`;
@@ -327,7 +335,7 @@ function buildField(f: Field, value: unknown, state: ImageState): HTMLElement {
   if (f.type === 'image') {
     const preview = el('div', { class: 'image-field__preview' });
     const setPreview = (src: string | null) => {
-      preview.replaceChildren(src ? el('img', { attrs: { src, alt: '' } }) : el('span', { class: 'muted', text: 'Sem foto' }));
+      preview.replaceChildren(src ? el('img', { attrs: { src, alt: '' } }) : el('span', { class: 'muted', text: 'Sem imagem' }));
     };
     setPreview(imageUrl(value, cfg.supabaseUrl));
 
@@ -340,7 +348,7 @@ function buildField(f: Field, value: unknown, state: ImageState): HTMLElement {
           const err = document.getElementById(errId)!;
           err.hidden = true;
           try {
-            state.pending = await prepareImage(file);
+            state.pending = await prepareImage(file, f.maxSide);
             state.removed = false;
             if (state.previewUrl) URL.revokeObjectURL(state.previewUrl);
             state.previewUrl = URL.createObjectURL(state.pending);
@@ -355,7 +363,7 @@ function buildField(f: Field, value: unknown, state: ImageState): HTMLElement {
     });
     const removeBtn = el('button', {
       class: 'btn btn--ghost btn--s',
-      text: 'Remover foto',
+      text: 'Remover',
       attrs: { type: 'button' },
       on: {
         click: () => {
@@ -369,11 +377,15 @@ function buildField(f: Field, value: unknown, state: ImageState): HTMLElement {
 
     return el(
       'div',
-      { class: 'field image-field' },
+      { class: `field image-field${(f.maxSide ?? 0) > 1600 ? ' image-field--wide' : ''}` },
       el('label', { text: f.label, attrs: { for: id } }),
       preview,
-      el('div', { class: 'image-field__actions' }, input, removeBtn),
-      el('p', { class: 'field__help', text: 'JPG, PNG ou WebP. A foto é reduzida e otimizada automaticamente.', attrs: { id: helpId } }),
+      el('div', { class: 'image-field__actions' }, input, f.required ? null : removeBtn),
+      el('p', {
+        class: 'field__help',
+        text: `${f.help ? `${f.help} ` : ''}JPG, PNG ou WebP. A imagem é reduzida e otimizada automaticamente.`,
+        attrs: { id: helpId },
+      }),
       el('p', { class: 'field__error', attrs: { id: errId, hidden: true } }),
     );
   }
@@ -459,10 +471,15 @@ function zodToErrors(err: ZodError): Record<string, string> {
 
 function openEditor(cfgE: EntityConfig, row: Row | null, count: number) {
   const dialog = $<HTMLDialogElement>('[data-editor]');
-  const state: ImageState = { pending: null, removed: false, previewUrl: null };
+  const states = new Map<string, ImageState>(
+    imageFields(cfgE).map((f) => [f.name, { pending: null, removed: false, previewUrl: null }]),
+  );
+  const noImage: ImageState = { pending: null, removed: false, previewUrl: null };
   const isNew = !row;
 
-  const fields = cfgE.fields.map((f) => buildField(f, row ? row[f.name] : f.type === 'checkbox' ? true : null, state));
+  const fields = cfgE.fields.map((f) =>
+    buildField(f, row ? row[f.name] : f.type === 'checkbox' ? true : null, states.get(f.name) ?? noImage),
+  );
   const formError = el('p', { class: 'form-error', attrs: { role: 'alert', hidden: true } });
   const save = el('button', { class: 'btn btn--label', text: isNew ? 'Publicar' : 'Salvar alterações', attrs: { type: 'submit' } });
 
@@ -516,34 +533,46 @@ function openEditor(cfgE: EntityConfig, row: Row | null, count: number) {
       values[f.name] = value;
       if (error) errors[f.name] = error;
     }
-    const currentPath = (row?.['image_path'] as string | null | undefined) ?? null;
-    values['image_path'] = state.removed ? null : currentPath;
+    const current: Record<string, string | null> = {};
+    let hasImage = false;
+    for (const f of imageFields(cfgE)) {
+      const st = states.get(f.name)!;
+      current[f.name] = (row?.[f.name] as string | null | undefined) ?? null;
+      values[f.name] = st.removed ? null : current[f.name];
+      if (st.pending || values[f.name]) hasImage = true;
+      // Só para validar: a imagem nova ainda vai subir
+      if (f.required && !st.pending && !values[f.name]) errors[f.name] = 'Escolha a imagem.';
+    }
     if (cfgE.sortable) values['sort_order'] = row ? row['sort_order'] : (count + 1) * 10;
-    if ((state.pending || values['image_path']) && !String(values['image_alt'] ?? '').trim()) {
-      errors['image_alt'] = 'Descreva a foto em poucas palavras.';
+    if (hasImage && !String(values['image_alt'] ?? '').trim()) {
+      errors['image_alt'] = cfgE.table === 'banners' ? 'Escreva o texto da arte.' : 'Descreva a foto em poucas palavras.';
     }
 
-    // 2. Validar com o mesmo schema do site
-    const parsed = SCHEMAS[cfgE.table].safeParse({ ...values, id: row?.id ?? 'seed-validate' });
-    if (!parsed.success) Object.assign(errors, zodToErrors(parsed.error));
+    // 2. Validar com o mesmo schema do site (imagens novas entram com um caminho provisório)
+    const probe: Record<string, unknown> = { ...values, id: row?.id ?? 'seed-validate' };
+    for (const [name, st] of states) if (st.pending) probe[name] = `${cfgE.folder}/novo.webp`;
+    const parsed = SCHEMAS[cfgE.table].safeParse(probe);
+    if (!parsed.success) for (const [k, v] of Object.entries(zodToErrors(parsed.error))) errors[k] ??= v;
     if (Object.keys(errors).length) {
       showErrors(form, errors);
       return;
     }
 
     setBusy(save, true, 'Salvando…');
-    let uploaded: string | null = null;
+    const uploaded: string[] = [];
     try {
-      // 3. Subir a foto nova (se houver)
-      if (state.pending) {
-        uploaded = imagePathFor(cfgE.folder, state.pending.type);
-        const { error } = await sb.storage.from('media').upload(uploaded, state.pending, {
-          contentType: state.pending.type,
+      // 3. Subir as imagens novas (se houver)
+      for (const [name, st] of states) {
+        if (!st.pending) continue;
+        const path = imagePathFor(cfgE.folder, st.pending.type);
+        const { error } = await sb.storage.from('media').upload(path, st.pending, {
+          contentType: st.pending.type,
           cacheControl: '31536000',
           upsert: false,
         });
         if (error) throw error;
-        values['image_path'] = uploaded;
+        uploaded.push(path);
+        values[name] = path;
       }
 
       // 4. Gravar
@@ -552,16 +581,17 @@ function openEditor(cfgE: EntityConfig, row: Row | null, count: number) {
         : await sb.from(cfgE.table).insert(values);
       if (error) throw error;
 
-      // 5. Limpar foto antiga substituída/removida
-      if (currentPath && currentPath !== values['image_path']) {
-        await sb.storage.from('media').remove([currentPath]);
-      }
+      // 5. Limpar imagens antigas substituídas/removidas
+      const stale = Object.entries(current)
+        .filter(([name, path]) => path && path !== values[name])
+        .map(([, path]) => path!);
+      if (stale.length) await sb.storage.from('media').remove(stale);
 
       toast(isNew ? (values['published'] ? 'Publicado.' : 'Rascunho salvo.') : 'Alterações salvas.');
       dialog.close();
       openTab(cfgE.table);
     } catch (err) {
-      if (uploaded) await sb.storage.from('media').remove([uploaded]);
+      if (uploaded.length) await sb.storage.from('media').remove(uploaded);
       formError.textContent = friendlyError(err);
       formError.hidden = false;
       setBusy(save, false, isNew ? 'Publicar' : 'Salvar alterações');
@@ -572,7 +602,7 @@ function openEditor(cfgE: EntityConfig, row: Row | null, count: number) {
   dialog.addEventListener(
     'close',
     () => {
-      if (state.previewUrl) URL.revokeObjectURL(state.previewUrl);
+      for (const st of states.values()) if (st.previewUrl) URL.revokeObjectURL(st.previewUrl);
     },
     { once: true },
   );
