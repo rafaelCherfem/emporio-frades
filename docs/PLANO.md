@@ -58,6 +58,8 @@ Stack: Astro 5, TypeScript estrito, GSAP (ScrollTrigger), Zod, Supabase, Vitest,
 
 `news` (novidades): título, texto, data de publicação, imagem, `published`.
 
+`banners` (vitrine do topo): nome interno, imagem para computador (obrigatória) e para celular (opcional), texto alternativo obrigatório, link opcional (só âncora interna, `tel:` ou `https://`, validado no banco e no site), validade, ordem, `published`.
+
 `admins`: `user_id` de quem pode editar.
 
 Regras: valores em centavos (inteiro), limites de tamanho em todos os textos, `updated_at` automático.
@@ -156,7 +158,7 @@ Princípio: o site parece uma loja real, não um template. O fio condutor é a *
 ## 8. Como o dono edita
 
 1. Abre `/admin`, entra com e-mail e senha.
-2. Escolhe a aba: Promoções, Em alta, Novidades ou Dados da loja.
+2. Escolhe a aba: Banners, Promoções, Em alta, Novidades ou Dados da loja.
 3. Preenche o formulário, escolhe a foto, marca "Publicado", salva.
 4. O site público mostra a mudança no próximo carregamento, sem deploy.
 

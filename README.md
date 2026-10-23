@@ -1,6 +1,6 @@
 # Empório Frades
 
-Site do Empório Frades (comidas e bebidas) com painel para o dono atualizar promoções, produtos em alta, novidades, endereço, contatos e horários sem precisar de programador.
+Site do Empório Frade’s (vinhos e bebidas) com painel para o dono atualizar banners da vitrine, promoções, produtos em alta, novidades, endereço, contatos e horários sem precisar de programador.
 
 - **Site**: Astro + TypeScript, animações com GSAP (ScrollTrigger), fontes hospedadas no próprio site.
 - **Conteúdo**: Supabase (banco Postgres + login + fotos), protegido por RLS.
@@ -45,7 +45,7 @@ npm run audit                    # dependências
 ### 1. Supabase
 
 1. Crie um projeto em [supabase.com](https://supabase.com) (região São Paulo).
-2. **SQL Editor** → cole e rode `supabase/migrations/20261023000000_init.sql`. Depois, se quiser, `supabase/seed.sql`.
+2. **SQL Editor** → cole e rode, nesta ordem, `supabase/migrations/20261023000000_init.sql` e `supabase/migrations/20261024000000_banners.sql`. Depois, se quiser, `supabase/seed.sql`.
 3. **Authentication → Sign In / Providers**: desligue **Allow new users to sign up**. Ninguém se cadastra sozinho.
 4. **Authentication → URL Configuration**: em *Site URL* coloque o endereço do site; em *Redirect URLs* adicione `https://SEU-DOMINIO/admin/` (necessário para "Esqueci a senha").
 5. **Authentication → Users → Add user**: crie o usuário do dono (e-mail e uma senha provisória; ele troca depois por "Esqueci a senha").
@@ -78,7 +78,7 @@ O build gera `dist/_headers` com a CSP já apontando para o seu Supabase.
 ## Guia rápido para o dono
 
 1. Acesse `https://SEU-DOMINIO/admin` e entre com e-mail e senha. (Salve esse endereço nos favoritos; ele não aparece no site.)
-2. Escolha a aba: **Promoções**, **Em alta**, **Novidades** ou **Dados da loja**.
+2. Escolha a aba: **Banners**, **Promoções**, **Em alta**, **Novidades** ou **Dados da loja**.
 3. Clique em **Nova promoção** (ou **Editar**), preencha e clique em **Publicar**.
 4. Recarregue o site: a mudança aparece na hora, sem esperar nada.
 
@@ -87,6 +87,8 @@ Dicas:
 - Desmarque **Publicada no site** para guardar como rascunho.
 - Fotos tiradas no celular podem ser enviadas direto: o painel reduz, otimiza e remove a localização da foto antes de subir.
 - As setas ↑ ↓ mudam a ordem em que os itens aparecem.
+- **Banners** são os cartazes que passam no topo do site, logo abaixo do toldo. Faça a arte no Canva (ou onde preferir) em **1920 × 720 px** e, se quiser uma versão própria para celular, em **1080 × 1350 px**. Deixe o texto importante longe das bordas. Em "O que o banner diz", escreva o texto da arte (é o que leitores de tela e o Google leem). Com datas de início e fim, o banner entra e sai sozinho. Enquanto não houver nenhum banner publicado, o site mostra três cartazes prontos (espumantes, vinhos, destilados).
+- Em **Em alta** e **Novidades**, a foto da garrafa com fundo branco (ou PNG sem fundo) fica com cara de vitrine. Sem foto, o site usa um desenho da bebida escolhido pelo nome/categoria (espumante, tinto, rosé, cerveja, whisky...).
 - Em **Dados da loja** ficam endereço, telefone, WhatsApp (e a mensagem que já vem escrita), redes sociais e horários.
 
 ---
