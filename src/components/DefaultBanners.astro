@@ -1,0 +1,78 @@
+---
+/**
+ * Banners padrão da vitrine: aparecem enquanto o dono não publicar os próprios
+ * (aba "Banners" do painel). Feitos em HTML + ilustrações próprias, sem marcas reais.
+ */
+import { asset } from '../lib/paths';
+
+interface Props {
+  phoneHref: string | null;
+}
+const { phoneHref } = Astro.props;
+const img = (n: string) => asset(`media/ilustracoes/${n}.svg`);
+
+const slides = [
+  {
+    theme: 'espumante',
+    kicker: 'Para brindar',
+    title: 'Espumantes',
+    title2: 'e champagnes',
+    text: 'Brut, prosecco e champagne gelando para a sua comemoração.',
+    cta: { label: 'Ver promoções', href: '#promocoes' },
+    bottles: ['espumante', 'espumante', 'espumante'],
+  },
+  {
+    theme: 'vinho',
+    kicker: 'Rótulos do mundo inteiro',
+    title: 'Vinhos',
+    title2: 'para cada ocasião',
+    text: 'Tintos, brancos e rosés de vários países, com indicação de quem entende.',
+    cta: { label: 'Como chegar', href: '#onde-estamos' },
+    bottles: ['branco', 'tinto', 'rose'],
+  },
+  {
+    theme: 'destilado',
+    kicker: 'Cervejas especiais',
+    title: 'Destilados',
+    title2: 'e cervejas',
+    text: 'Whisky, gin e cervejas artesanais. Pergunte pelo rótulo que você procura.',
+    cta: { label: phoneHref ? 'Ligar para a loja' : 'Ver promoções', href: phoneHref ?? '#promocoes' },
+    bottles: ['cerveja', 'whisky', 'gin'],
+  },
+];
+---
+
+{
+  slides.map((s, i) => (
+    <div class:list={['slide', 'slide--art', `slide--${s.theme}`]} data-slide>
+      <div class="slide__bg" aria-hidden="true" />
+      <div class="slide__inner">
+        <div class="slide__copy">
+          <p class="slide__kicker">{s.kicker}</p>
+          <p class="slide__title">
+            <span class="slide__title-main">{s.title}</span>
+            <span class="slide__title-sub">{s.title2}</span>
+          </p>
+          <p class="slide__text">{s.text}</p>
+          <a class="btn btn--label slide__cta" href={s.cta.href}>
+            {s.cta.label}
+          </a>
+        </div>
+        <div class="slide__art" aria-hidden="true">
+          <span class="slide__halo" />
+          {s.bottles.map((b, j) => (
+            <img
+              class:list={['slide__bottle', `slide__bottle--${j + 1}`]}
+              src={img(b)}
+              alt=""
+              width="160"
+              height="400"
+              loading={i === 0 ? 'eager' : 'lazy'}
+              decoding="async"
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  ))
+}

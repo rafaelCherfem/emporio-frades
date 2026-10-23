@@ -18,18 +18,21 @@ export interface VNode {
 const TAGS = new Set([
   'a', 'article', 'b', 'div', 'figure', 'figcaption', 'h3', 'h4', 'img', 'li', 'ol', 'p',
   'section', 'small', 'span', 'strong', 's', 'time', 'ul', 'del', 'ins', 'data', 'abbr',
+  'picture', 'source',
 ]);
 
-const VOID = new Set(['img']);
+const VOID = new Set(['img', 'source']);
 
 const ATTRS = new Set([
-  'class', 'href', 'src', 'alt', 'title', 'datetime', 'value', 'loading', 'decoding',
+  'class', 'href', 'src', 'srcset', 'media', 'sizes', 'fetchpriority', 'alt', 'title', 'datetime', 'value', 'loading', 'decoding',
+  'aria-roledescription', 'data-slide', 'data-index',
   'width', 'height', 'target', 'rel', 'role', 'id', 'tabindex', 'lang',
   'aria-label', 'aria-hidden', 'aria-current', 'aria-describedby',
   'data-id', 'data-kind', 'data-day', 'data-today', 'data-state',
 ]);
 
-const URL_ATTRS = new Set(['href', 'src']);
+// srcset aqui sempre leva UMA url (sem descritores), validada como as demais
+const URL_ATTRS = new Set(['href', 'src', 'srcset']);
 
 export function isAllowedUrl(value: string): boolean {
   const v = value.trim();

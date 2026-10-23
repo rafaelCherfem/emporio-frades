@@ -22,6 +22,7 @@ export interface FakeOptions {
   promotions?: Record<string, unknown>[];
   highlights?: Record<string, unknown>[];
   news?: Record<string, unknown>[];
+  banners?: Record<string, unknown>[];
   settings?: Record<string, unknown>;
 }
 
@@ -62,6 +63,7 @@ export async function fakeSupabase(page: Page, opts: FakeOptions = {}): Promise<
     promotions: opts.promotions ?? [],
     highlights: opts.highlights ?? [],
     news: opts.news ?? [],
+    banners: opts.banners ?? [],
     store_settings: [{ id: 1, ...baseSettings, ...opts.settings }],
     admins: opts.isAdmin === false ? [] : [{ user_id: ADMIN_ID }],
   };
@@ -166,6 +168,20 @@ export const promo = (over: Record<string, unknown> = {}) => ({
   ends_at: null,
   image_path: null,
   image_alt: '',
+  sort_order: 10,
+  published: true,
+  ...over,
+});
+
+export const banner = (over: Record<string, unknown> = {}) => ({
+  id: crypto.randomUUID(),
+  title: 'Banner do banco',
+  image_path: 'banners/2026/0b8f6a2e-5d1c-4c7e-9a7b-1f2e3d4c5b6a.webp',
+  image_mobile_path: null,
+  image_alt: 'Espumantes com 15% de desconto',
+  link_url: '#promocoes',
+  starts_at: null,
+  ends_at: null,
   sort_order: 10,
   published: true,
   ...over,

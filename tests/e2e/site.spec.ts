@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { fakeSupabase, promo } from './fake-supabase';
+import { banner, fakeSupabase, promo } from './fake-supabase';
 
 /** Junta erros de JS e violações de CSP para falhar o teste se aparecerem. */
 function watchErrors(page: Page) {
@@ -121,6 +121,59 @@ test.describe('site público', () => {
     await page.goto('/');
     await expect(page.locator('[data-promo-empty]')).toBeVisible();
     await expect(page.locator('[data-rail]')).toBeHidden();
+  });
+
+  test('vitrine: sem banners do dono, mostra os cartazes padrão em carrossel', async ({ page }) => {
+    await fakeSupabase(page);
+    await page.goto('/');
+    const vitrine = page.locator('[data-vitrine]');
+    await expect(vitrine.locator('[data-list="banners"]')).toHaveAttribute('data-kind', 'default');
+    await expect(vitrine.locator('.slide--art')).toHaveCount(3);
+    await expect(vitrine.locator('.slide.is-active')).toHaveCount(1);
+    await expect(vitrine.locator('.vitrine__dot')).toHaveCount(3);
+    // Só o slide ativo fica acessível ao teclado/leitor de tela
+    await expect(vitrine.locator('.slide[inert]')).toHaveCount(2);
+    await vitrine.getByRole('button', { name: 'Mostrar banner 2' }).click();
+    await expect(vitrine.locator('.vitrine__dot').nth(1)).toHaveAttribute('aria-current', 'true');
+    await expect(vitrine.locator('.slide').nth(1)).toHaveClass(/is-active/);
+  });
+
+  test('vitrine: banners do dono entram no lugar; expirado, rascunho e link perigoso ficam de fora', async ({ page }) => {
+    const errors = watchErrors(page);
+    await fakeSupabase(page, {
+      banners: [
+        banner({ image_alt: 'Espumantes em promoção' }),
+        banner({ image_alt: 'Link malicioso', link_url: 'javascript:alert(1)', sort_order: 20 }),
+        banner({ image_alt: 'Já acabou', ends_at: '2020-01-01T02:59:59.000Z' }),
+        banner({ image_alt: 'Rascunho', published: false }),
+        banner({ image_alt: 'Imagem de fora', image_path: 'https://evil.example/x.webp' }),
+      ],
+    });
+    await page.goto('/');
+    const track = page.locator('[data-vitrine] [data-list="banners"]');
+    await expect(track).toHaveAttribute('data-kind', 'owner');
+    // O banner com link inválido é descartado inteiro pelo schema
+    await expect(track.locator('.slide img')).toHaveAttribute('alt', 'Espumantes em promoção');
+    await expect(track.locator('.slide')).toHaveCount(1);
+    await expect(track.locator('.slide a')).toHaveAttribute('href', '#promocoes');
+    await expect(track.locator('img')).toHaveAttribute('src', /^https:\/\/test-project\.supabase\.co\/storage\/v1\/object\/public\/media\/banners\//);
+    // Um banner só: sem setas nem indicadores
+    await expect(page.locator('[data-vitrine-controls]')).toBeHidden();
+    expect(errors.filter((e) => !/Failed to load resource/.test(e))).toEqual([]);
+  });
+
+  test('mais procurados: card com imagem da bebida, preço e botão de reservar', async ({ page }) => {
+    await fakeSupabase(page, {
+      highlights: [
+        { id: crypto.randomUUID(), name: 'Prosecco italiano', description: 'Extra dry', category: 'Espumantes', price_cents: 7990, unit: 'garrafa', image_path: null, image_alt: '', sort_order: 10, published: true },
+      ],
+    });
+    await page.goto('/');
+    const card = page.locator('.product').first();
+    await expect(card.locator('.product__name')).toHaveText('Prosecco italiano');
+    await expect(card.locator('.product__media img')).toHaveAttribute('src', /ilustracoes\/espumante\.svg$/);
+    await expect(card.locator('.product__price')).toContainText(/79,90/);
+    await expect(card.locator('.product__cta')).toHaveAttribute('href', /^https:\/\/wa\.me\//);
   });
 
   test('mapa só carrega depois do clique', async ({ page }) => {

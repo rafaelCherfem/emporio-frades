@@ -12,7 +12,8 @@ import {
   wazeHref,
   whatsappHref,
 } from './safe';
-import type { Highlight, News, Promotion, StoreSettings } from './schemas';
+import { asset } from './paths';
+import type { Banner, Highlight, News, Promotion, StoreSettings } from './schemas';
 import { h, type VNode } from './vnode';
 
 /**
@@ -23,6 +24,8 @@ import { h, type VNode } from './vnode';
 export interface ViewEnv {
   supabaseUrl: string | undefined;
   now?: Date;
+  /** Link do botão "Reservar" dos produtos (telefone ou WhatsApp da loja) */
+  reserveHref?: string | null;
 }
 
 function picture(path: string | null, alt: string, env: ViewEnv, cls: string, w: number, hgt: number) {
@@ -89,69 +92,145 @@ export function promotionList(list: Promotion[], env: ViewEnv): VNode[] {
   return list.filter((p) => isPromotionActive(p, env.now)).map((p) => promotionTag(p, env));
 }
 
-/* Em alta: cardápio agrupado por categoria */
+/* Ilustração reserva: escolhe a garrafa desenhada pelo nome/categoria do item */
 
-export function highlightMenu(list: Highlight[], env: ViewEnv): VNode[] {
-  const groups = new Map<string, Highlight[]>();
-  for (const item of list.filter((i) => i.published)) {
-    const key = item.category || 'Da casa';
-    groups.set(key, [...(groups.get(key) ?? []), item]);
-  }
-  return [...groups.entries()].map(([category, items]) =>
-    h(
-      'li',
-      { class: 'menu__group' },
-      h('h3', { class: 'menu__category' }, category),
-      h(
-        'ul',
-        { class: 'menu__items' },
-        ...items.map((i) => {
-          const price = formatBRL(i.price_cents);
-          return h(
-            'li',
-            { class: 'menu__item', 'data-id': i.id },
-            picture(i.image_path, i.image_alt, env, 'menu__photo', 160, 160),
-            h(
-              'div',
-              { class: 'menu__line' },
-              h('h4', { class: 'menu__name' }, i.name),
-              h('span', { class: 'menu__leader', 'aria-hidden': 'true' }),
-              price
-                ? h(
-                    'data',
-                    { class: 'menu__price', value: (i.price_cents! / 100).toFixed(2) },
-                    price,
-                    i.unit ? h('small', {}, ` /${i.unit}`) : null,
-                  )
-                : null,
-            ),
-            i.description ? h('p', { class: 'menu__desc' }, i.description) : null,
-          );
-        }),
-      ),
-    ),
+const ILLUSTRATIONS: [RegExp, string][] = [
+  [/espumante|prosecco|champa(gne|nhe)|cava\b|brut|moscatel/, 'espumante'],
+  [/ros[eé](?![a-z])|rosado/, 'rose'],
+  [/branco|chardonnay|sauvignon|riesling|alvarinho|moscato|verde/, 'branco'],
+  [/cerveja|ipa\b|lager|chop|pilsen|weiss|stout|trigo|ale\b/, 'cerveja'],
+  [/whisk|u[ií]sque|bourbon|conhaque|rum\b|cacha[çc]a|brandy/, 'whisky'],
+  [/\bgin\b|vodka|t[oô]nica|tequila|licor|destilado|aperitivo/, 'gin'],
+  [/ta[çc]a|copo|acess[oó]rio|saca-rolha|decanter/, 'taca'],
+  [/presente|kit|cesta|caixa|encomenda/, 'presente'],
+];
+
+export function illustrationFor(...texts: (string | null | undefined)[]): string {
+  const t = texts.filter(Boolean).join(' ').toLowerCase();
+  const hit = ILLUSTRATIONS.find(([re]) => re.test(t));
+  return asset(`media/ilustracoes/${hit ? hit[1] : 'tinto'}.svg`);
+}
+
+/** Foto do item (Supabase) ou a ilustração correspondente. */
+function mediaFor(path: string | null, alt: string, env: ViewEnv, fallbackTexts: string[], cls: string) {
+  const photo = imageUrl(path, env.supabaseUrl);
+  return h(
+    'figure',
+    { class: `${cls}${photo ? '' : ` ${cls}--illustration`}` },
+    h('img', {
+      src: photo ?? illustrationFor(...fallbackTexts),
+      alt: photo ? alt || '' : '',
+      loading: 'lazy',
+      decoding: 'async',
+      width: 320,
+      height: 400,
+    }),
   );
 }
 
-/* Novidades: mural */
+/* Mais procurados: cards de produto (foto da garrafa, nome, preço, reservar) */
 
-export function newsBoard(list: News[], env: ViewEnv): VNode[] {
+export function productCards(list: Highlight[], env: ViewEnv): VNode[] {
+  return list
+    .filter((i) => i.published)
+    .map((i) => {
+      const price = formatBRL(i.price_cents);
+      return h(
+        'li',
+        { class: 'product', 'data-id': i.id },
+        h(
+          'article',
+          { class: 'product__card' },
+          mediaFor(i.image_path, i.image_alt, env, [i.name, i.category, i.description], 'product__media'),
+          h(
+            'div',
+            { class: 'product__body' },
+            i.category ? h('p', { class: 'product__cat' }, i.category) : null,
+            h('h3', { class: 'product__name' }, i.name),
+            i.description ? h('p', { class: 'product__desc' }, i.description) : null,
+            h(
+              'div',
+              { class: 'product__buy' },
+              price
+                ? h(
+                    'data',
+                    { class: 'product__price', value: (i.price_cents! / 100).toFixed(2) },
+                    price,
+                    i.unit ? h('small', {}, ` /${i.unit}`) : null,
+                  )
+                : h('span', { class: 'product__price product__price--ask' }, 'Consulte'),
+              env.reserveHref
+                ? h('a', { class: 'product__cta', href: env.reserveHref, 'aria-label': `Reservar ${i.name}` }, 'Reservar')
+                : null,
+            ),
+          ),
+        ),
+      );
+    });
+}
+
+/* Novidades: cards com imagem */
+
+export function newsCards(list: News[], env: ViewEnv): VNode[] {
   return list
     .filter((n) => n.published)
     .map((n) =>
       h(
         'li',
-        { class: 'board__item', 'data-id': n.id },
+        { class: 'news-card', 'data-id': n.id },
         h(
           'article',
-          {},
-          h('time', { class: 'board__date', datetime: n.published_at }, formatDateLong(n.published_at)),
-          h('h3', { class: 'board__title' }, n.title),
-          n.body ? h('p', { class: 'board__text' }, n.body) : null,
-          picture(n.image_path, n.image_alt, env, 'board__photo', 640, 420),
+          { class: 'news-card__inner' },
+          mediaFor(n.image_path, n.image_alt, env, [n.title, n.body], 'news-card__media'),
+          h(
+            'div',
+            { class: 'news-card__body' },
+            h('time', { class: 'news-card__date', datetime: n.published_at }, formatDateLong(n.published_at)),
+            h('h3', { class: 'news-card__title' }, n.title),
+            n.body ? h('p', { class: 'news-card__text' }, n.body) : null,
+          ),
         ),
       ),
     );
+}
+
+/* Banners do dono (vitrine) */
+
+const BANNER_LINK = /^$|^#[a-z0-9-]{1,40}$|^tel:\+\d{8,15}$|^https:\/\/[^\s<>"']+$/;
+
+export function bannerSlides(list: Banner[], env: ViewEnv): VNode[] {
+  const now = env.now ?? new Date();
+  const active = list.filter(
+    (b) =>
+      b.published &&
+      (!b.starts_at || new Date(b.starts_at) <= now) &&
+      (!b.ends_at || new Date(b.ends_at) >= now) &&
+      imageUrl(b.image_path, env.supabaseUrl),
+  );
+  return active.map((b, i) => {
+    const src = imageUrl(b.image_path, env.supabaseUrl)!;
+    const mobile = imageUrl(b.image_mobile_path, env.supabaseUrl);
+    const pic = h(
+      'picture',
+      { class: 'slide__media' },
+      mobile ? h('source', { media: '(max-width: 700px)', srcset: mobile }) : null,
+      h('img', {
+        src,
+        alt: b.image_alt,
+        width: 1920,
+        height: 720,
+        decoding: 'async',
+        loading: i === 0 ? null : 'lazy',
+        fetchpriority: i === 0 ? 'high' : null,
+      }),
+    );
+    const link = BANNER_LINK.test(b.link_url) && b.link_url ? b.link_url : null;
+    return h(
+      'div',
+      { class: 'slide slide--image', 'data-slide': '', 'data-id': b.id },
+      link ? h('a', { class: 'slide__link', href: link }, pic) : pic,
+    );
+  });
 }
 
 /* Horários, com o dia de hoje marcado */

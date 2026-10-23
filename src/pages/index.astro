@@ -3,6 +3,7 @@ import Icon from '../components/Icon.astro';
 import Logo from '../components/Logo.astro';
 import Marquee from '../components/Marquee.astro';
 import Seal from '../components/Seal.astro';
+import DefaultBanners from '../components/DefaultBanners.astro';
 import { demoContent, emptyLists, storeSettings } from '../data/seed';
 import Base from '../layouts/Base.astro';
 import { fetchContent } from '../lib/api';
@@ -12,9 +13,10 @@ import {
   addressLines,
   contactLinks,
   fullAddress,
-  highlightMenu,
+  bannerSlides,
+  productCards,
   hoursList,
-  newsBoard,
+  newsCards,
   promotionList,
   socialList,
 } from '../lib/views';
@@ -32,16 +34,19 @@ const content: SiteContent = cfg.enabled
       promotions: live?.promotions ?? [...emptyLists.promotions],
       highlights: live?.highlights ?? [...emptyLists.highlights],
       news: live?.news ?? [...emptyLists.news],
+      banners: live?.banners ?? [...emptyLists.banners],
     }
   : demoContent;
 
 const s = content.settings;
-const env = { supabaseUrl: cfg.supabaseUrl, now: new Date() };
 const links = contactLinks(s);
+// "Reservar" dos produtos: WhatsApp se houver, senão telefone
+const env = { supabaseUrl: cfg.supabaseUrl, now: new Date(), reserveHref: links.whatsapp ?? links.phone };
 const [addr1, addr2] = addressLines(s);
 const promos = promotionList(content.promotions, env);
-const highlights = highlightMenu(content.highlights, env);
-const news = newsBoard(content.news, env);
+const highlights = productCards(content.highlights, env);
+const news = newsCards(content.news, env);
+const banners = bannerSlides(content.banners, env);
 const year = new Date().getFullYear();
 
 // Conteúdo inicial entregue ao navegador como DADO (application/json, não executa).
@@ -53,7 +58,7 @@ const jsonLd = {
   name: s.name,
   description: s.tagline,
   url: Astro.site?.toString(),
-  image: new URL(asset('media/salao-1360.webp'), Astro.site).toString(),
+  image: new URL(asset('media/vinhos-960.webp'), Astro.site).toString(),
   telephone: s.phone ? `+55${s.phone}` : undefined,
   address: {
     '@type': 'PostalAddress',
@@ -161,21 +166,24 @@ const gores = Array.from({ length: 44 }, (_, i) => i);
 
     <div class="storefront-wrap">
     <Seal />
-    <figure class="storefront" data-storefront>
+    <section class="vitrine" data-storefront data-vitrine aria-roledescription="carrossel" aria-label="Destaques da loja">
       <div class="valance" aria-hidden="true" data-valance>
         {gores.map(() => <span class="valance__gore"><span></span></span>)}
       </div>
-      <img
-        src={asset('media/salao-1360.webp')}
-        srcset={`${asset('media/salao-800.webp')} 800w, ${asset('media/salao-1360.webp')} 1360w`}
-        sizes="100vw"
-        width="1360"
-        height="570"
-        alt="Salão do Empório Frade’s, com gôndolas e paredes de prateleiras cheias de vinhos e uma mesa de espumantes no centro"
-        fetchpriority="high"
-        decoding="async"
-      />
-    </figure>
+      <div class="vitrine__track" data-list="banners" aria-live="off">
+        {banners.length ? <Fragment set:html={toHTML(banners)} /> : <DefaultBanners phoneHref={links.phone} />}
+      </div>
+      <template data-default-banners><DefaultBanners phoneHref={links.phone} /></template>
+      <div class="vitrine__controls" data-vitrine-controls hidden>
+        <button class="vitrine__arrow vitrine__arrow--prev" type="button" data-vitrine-prev aria-label="Banner anterior">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </button>
+        <div class="vitrine__dots" data-vitrine-dots></div>
+        <button class="vitrine__arrow vitrine__arrow--next" type="button" data-vitrine-next aria-label="Próximo banner">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </button>
+      </div>
+    </section>
     </div>
 
     <Marquee />
@@ -207,12 +215,12 @@ const gores = Array.from({ length: 44 }, (_, i) => i);
     </section>
 
     <section class="hot" id="em-alta" aria-labelledby="hot-title" data-hot hidden={highlights.length === 0}>
-      <div class="wrap hot__grid">
-        <div class="hot__intro">
+      <div class="wrap">
+        <div class="shelf-head">
           <h2 class="section-title" id="hot-title" data-reveal>{words('Os mais procurados').map((w, i) => <>{i > 0 && ' '}<span class="w"><span>{w}</span></span></>)}</h2>
-          <p class="section-lead">O que a clientela mais tem levado. Confira o preço na etiqueta da loja.</p>
+          <p class="section-lead">O que a clientela mais tem levado. Para reservar, é só ligar.</p>
         </div>
-        <ul class="menu" data-list="highlights" set:html={toHTML(highlights)} />
+        <ul class="shelf" data-list="highlights" set:html={toHTML(highlights)} />
       </div>
     </section>
 
@@ -236,8 +244,11 @@ const gores = Array.from({ length: 44 }, (_, i) => i);
 
     <section class="news" id="novidades" aria-labelledby="news-title" data-news hidden={news.length === 0}>
       <div class="wrap">
-        <h2 class="section-title" id="news-title" data-reveal>{words('Novidades').map((w, i) => <>{i > 0 && ' '}<span class="w"><span>{w}</span></span></>)}</h2>
-        <ol class="board" data-list="news" set:html={toHTML(news)} />
+        <div class="shelf-head">
+          <h2 class="section-title" id="news-title" data-reveal>{words('Novidades').map((w, i) => <>{i > 0 && ' '}<span class="w"><span>{w}</span></span></>)}</h2>
+          <p class="section-lead">O que acabou de chegar e o que está acontecendo na loja.</p>
+        </div>
+        <ul class="news-grid" data-list="news" set:html={toHTML(news)} />
       </div>
     </section>
 

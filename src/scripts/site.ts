@@ -5,6 +5,7 @@ import { mapEmbedSrc } from '../lib/safe';
 import {
   highlightSchema,
   newsSchema,
+  bannerSchema,
   parseList,
   promotionSchema,
   storeSettingsSchema,
@@ -14,14 +15,16 @@ import {
 import {
   addressLines,
   contactLinks,
-  highlightMenu,
+  bannerSlides,
+  productCards,
   hoursList,
-  newsBoard,
+  newsCards,
   promotionList,
   socialList,
   type ContactLinks,
 } from '../lib/views';
 import { mount } from '../lib/vnode';
+import { initCarousel, type Carousel } from './carousel';
 import { initMotion, refreshMotion } from './motion';
 
 const cfg = readConfig();
@@ -42,6 +45,7 @@ function readInitial(): SiteContent | null {
       promotions: parseList(promotionSchema, raw?.promotions),
       highlights: parseList(highlightSchema, raw?.highlights),
       news: parseList(newsSchema, raw?.news),
+      banners: parseList(bannerSchema, raw?.banners),
     };
   } catch {
     return null;
@@ -125,7 +129,8 @@ function renderStatus(s: StoreSettings) {
 /* ---------- Listas ---------- */
 
 function renderLists(c: SiteContent) {
-  const env = { supabaseUrl: cfg.supabaseUrl, now: new Date() };
+  const links = contactLinks(c.settings);
+  const env = { supabaseUrl: cfg.supabaseUrl, now: new Date(), reserveHref: links.whatsapp ?? links.phone };
 
   const promos = promotionList(c.promotions, env);
   const promoList = $('[data-list="promotions"]');
@@ -141,19 +146,39 @@ function renderLists(c: SiteContent) {
   if (empty) empty.hidden = promos.length > 0;
 
   // Seções sem conteúdo somem (em vez de mostrar um bloco vazio)
-  const hl = highlightMenu(c.highlights, env);
+  const hl = productCards(c.highlights, env);
   const hlList = $('[data-list="highlights"]');
   if (hlList) mount(hlList, hl);
   const hot = $('[data-hot]');
   if (hot) hot.hidden = hl.length === 0;
 
-  const news = newsBoard(c.news, env);
+  const news = newsCards(c.news, env);
   const newsList = $('[data-list="news"]');
   if (newsList) mount(newsList, news);
   const newsSection = $('[data-news]');
   if (newsSection) newsSection.hidden = news.length === 0;
 
   syncNav();
+}
+
+/* ---------- Vitrine de banners ---------- */
+
+let carousel: Carousel | null = null;
+
+/** Banners do dono quando houver; senão, os banners padrão desenhados. */
+function renderBanners(c: SiteContent) {
+  const track = $('[data-list="banners"]');
+  if (!track) return;
+  const links = contactLinks(c.settings);
+  const slides = bannerSlides(c.banners, { supabaseUrl: cfg.supabaseUrl, now: new Date(), reserveHref: links.phone });
+  const kind = slides.length ? 'owner' : 'default';
+  if (slides.length) mount(track, slides);
+  else if (track.dataset['kind'] !== 'default') {
+    const tpl = $<HTMLTemplateElement>('template[data-default-banners]');
+    if (tpl) track.replaceChildren(tpl.content.cloneNode(true));
+  }
+  track.dataset['kind'] = kind;
+  carousel?.refresh();
 }
 
 /** Menu só mostra links para seções visíveis. */
@@ -251,6 +276,13 @@ export async function initSite() {
     // Reaplica as listas com a data de AGORA: some o que venceu desde o build
     renderLists(content);
   }
+  const vitrine = $('[data-vitrine]');
+  if (vitrine) {
+    const track = $('[data-list="banners"]');
+    if (track) track.dataset['kind'] = content?.banners.length ? 'owner' : 'default';
+    if (content) renderBanners(content);
+    carousel = initCarousel(vitrine);
+  }
   initMotion();
 
   setInterval(() => content && renderStatus(content.settings), 60_000);
@@ -262,8 +294,10 @@ export async function initSite() {
     promotions: live.promotions ?? content.promotions,
     highlights: live.highlights ?? content.highlights,
     news: live.news ?? content.news,
+    banners: live.banners ?? content.banners,
   };
   applySettings(content.settings);
   renderLists(content);
+  renderBanners(content);
   refreshMotion();
 }

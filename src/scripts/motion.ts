@@ -36,14 +36,14 @@ export function initMotion() {
 
   mm.add(MOTION, () => {
     safe('letreiro', signScroll);
-    safe('paralaxe', photoParallax);
+    safe('vitrine', vitrineDepth);
     safe('toldo', valanceWave);
     safe('títulos', revealTitles);
     safe('selo', sealSpin);
     safe('faixa', marquee);
     safe('cabeçalho', autoHideHeader);
     safe('preços', countPrices);
-    safe('cardápio', revealMenu);
+    safe('produtos', revealProducts);
     safe('sobre', revealAbout);
     safe('mural', revealNews);
     safe('rodapé', revealFooter);
@@ -87,16 +87,16 @@ function signScroll() {
     .to(name, { autoAlpha: 0.2, duration: 0.45, ease: 'power1.in' }, 0.55);
 }
 
-/* ---------- 2. Paralaxe da foto ---------- */
+/* ---------- 2. Vitrine: ao rolar, o conteúdo dos banners afunda um pouco ---------- */
 
-function photoParallax() {
-  const fig = $('[data-storefront]');
-  const img = fig?.querySelector('img');
-  if (!fig || !img) return;
+function vitrineDepth() {
+  const vitrine = $('[data-vitrine]');
+  const track = vitrine?.querySelector<HTMLElement>('[data-list="banners"]');
+  if (!vitrine || !track) return;
   gsap.fromTo(
-    img,
-    { yPercent: -9, scale: 1.06 },
-    { yPercent: 9, scale: 1, ease: 'none', scrollTrigger: { trigger: fig, start: 'top bottom', end: 'bottom top', scrub: true } },
+    track,
+    { yPercent: 0, scale: 1 },
+    { yPercent: 8, scale: 1.03, ease: 'none', scrollTrigger: { trigger: vitrine, start: 'top top', end: 'bottom top', scrub: true } },
   );
 }
 
@@ -319,15 +319,23 @@ function countPrices() {
   });
 }
 
-/* ---------- Cardápio: linhas entram e o pontilhado se desenha ---------- */
+/* ---------- Produtos: cards sobem em sequência, garrafa "assenta" no palco ---------- */
 
-function revealMenu() {
-  for (const group of gsap.utils.toArray<HTMLElement>('.menu__group')) {
-    const tl = gsap.timeline({ scrollTrigger: { trigger: group, start: 'top 85%', once: true } });
-    tl.from(group.querySelector('.menu__category'), { autoAlpha: 0, x: -16, duration: 0.6, ease: 'power3.out' })
-      .from(group.querySelectorAll('.menu__item'), { autoAlpha: 0, y: 22, duration: 0.7, ease: 'power3.out', stagger: 0.08 }, 0.1)
-      .from(group.querySelectorAll('.menu__leader'), { scaleX: 0, duration: 0.9, ease: 'power2.inOut', stagger: 0.08 }, 0.3);
-  }
+function revealProducts() {
+  const shelf = $('[data-list="highlights"]');
+  if (!shelf) return;
+  ScrollTrigger.create({
+    trigger: shelf,
+    start: 'top 85%',
+    once: true,
+    onEnter() {
+      // consulta na hora: o conteúdo ao vivo pode ter trocado os cards
+      const cards = shelf.querySelectorAll('.product');
+      const bottles = shelf.querySelectorAll('.product__media img');
+      gsap.from(cards, { autoAlpha: 0, y: 40, duration: 0.8, ease: 'power3.out', stagger: 0.09 });
+      gsap.from(bottles, { y: 50, rotate: -8, duration: 1.1, ease: 'back.out(1.6)', stagger: 0.09, delay: 0.15 });
+    },
+  });
 }
 
 /* ---------- Sobre: foto revelada de baixo para cima ---------- */
@@ -348,11 +356,11 @@ function revealAbout() {
 /* ---------- Mural de novidades ---------- */
 
 function revealNews() {
-  const items = gsap.utils.toArray<HTMLElement>('.board__item');
+  const items = gsap.utils.toArray<HTMLElement>('.news-card');
   if (!items.length) return;
   gsap.from(items, {
     autoAlpha: 0,
-    x: -40,
+    y: 40,
     duration: 0.9,
     ease: 'power3.out',
     stagger: 0.12,
