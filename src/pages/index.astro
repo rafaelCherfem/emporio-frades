@@ -1,8 +1,11 @@
 ---
 import Icon from '../components/Icon.astro';
-import { seed } from '../data/seed';
+import Logo from '../components/Logo.astro';
+import { demoContent, emptyLists, storeSettings } from '../data/seed';
 import Base from '../layouts/Base.astro';
+import { fetchContent } from '../lib/api';
 import { readConfig } from '../lib/config';
+import type { SiteContent } from '../lib/schemas';
 import {
   addressLines,
   contactLinks,
@@ -16,20 +19,38 @@ import {
 import { toHTML } from '../lib/vnode';
 
 const cfg = readConfig();
-const s = seed.settings;
-const env = { supabaseUrl: cfg.supabaseUrl };
+
+// Com o banco configurado, o HTML já sai com o conteúdo real do momento do build.
+// Sem banco (demonstração), usa o conteúdo de exemplo.
+const live = cfg.enabled ? await fetchContent(cfg) : null;
+const content: SiteContent = cfg.enabled
+  ? {
+      settings: live?.settings ?? storeSettings,
+      promotions: live?.promotions ?? [...emptyLists.promotions],
+      highlights: live?.highlights ?? [...emptyLists.highlights],
+      news: live?.news ?? [...emptyLists.news],
+    }
+  : demoContent;
+
+const s = content.settings;
+const env = { supabaseUrl: cfg.supabaseUrl, now: new Date() };
 const links = contactLinks(s);
 const [addr1, addr2] = addressLines(s);
-
-const promos = promotionList(seed.promotions, env);
+const promos = promotionList(content.promotions, env);
+const highlights = highlightMenu(content.highlights, env);
+const news = newsBoard(content.news, env);
 const year = new Date().getFullYear();
+
+// Conteúdo inicial entregue ao navegador como DADO (application/json, não executa).
+const initial = JSON.stringify(content).replace(/</g, '\\u003c');
 
 const jsonLd = {
   '@context': 'https://schema.org',
-  '@type': 'GroceryStore',
+  '@type': 'LiquorStore',
   name: s.name,
   description: s.tagline,
   url: Astro.site?.toString(),
+  image: new URL('/media/salao-1360.webp', Astro.site).toString(),
   telephone: s.phone ? `+55${s.phone}` : undefined,
   address: {
     '@type': 'PostalAddress',
@@ -50,21 +71,23 @@ const jsonLd = {
     })),
   sameAs: [links.instagram, links.facebook, links.tiktok].filter(Boolean),
 };
+
+const ext = { target: '_blank', rel: 'noopener noreferrer' };
 ---
 
 <Base
-  title={`${s.name} | Comidas e bebidas`}
+  title={`${s.name} | Vinhos, cervejas e destilados na Saúde, SP`}
   description={`${s.tagline} ${fullAddress(s)}.`}
   jsonLd={jsonLd}
 >
   <noscript><link rel="stylesheet" href="/noscript.css" /></noscript>
   <a class="skip" href="#conteudo">Pular para o conteúdo</a>
 
-  {!cfg.enabled && <p class="demo-banner" role="note">Modo demonstração: conteúdo de exemplo. Configure o Supabase para editar pelo painel.</p>}
+  {!cfg.enabled && <p class="demo-banner" role="note">Modo demonstração: promoções e produtos são exemplos. Configure o Supabase para editar pelo painel.</p>}
 
   <header class="header" data-header>
     <div class="wrap header__inner">
-      <a class="wordmark" href="#topo" data-bind="name">{s.name}</a>
+      <a class="brand-link" href="#topo" aria-label={`${s.name}, início`}><Logo /></a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="menu" data-nav-toggle>
         <span></span><span></span><span></span>
         <span class="sr-only">Menu</span>
@@ -72,14 +95,18 @@ const jsonLd = {
       <nav class="nav" id="menu" aria-label="Principal" data-nav>
         <ul class="nav__list">
           <li><a href="#promocoes">Promoções</a></li>
-          <li><a href="#em-alta">Em alta</a></li>
+          <li><a href="#em-alta">Mais procurados</a></li>
           <li><a href="#novidades">Novidades</a></li>
           <li><a href="#onde-estamos">Onde estamos</a></li>
         </ul>
       </nav>
-      <a class="btn btn--label" href={links.whatsapp} data-link="whatsapp" target="_blank" rel="noopener noreferrer" hidden={!links.whatsapp}>
+      <a class="btn btn--label" href={links.whatsapp} data-link="whatsapp" {...ext} hidden={!links.whatsapp}>
         <Icon name="whatsapp" />
         WhatsApp
+      </a>
+      <a class="btn btn--label" href={links.phone} data-link="phone" data-fallback hidden={!links.phone || !!links.whatsapp}>
+        <Icon name="phone" />
+        Ligar
       </a>
     </div>
   </header>
@@ -102,57 +129,89 @@ const jsonLd = {
           </p>
           <div class="hero__actions">
             <a class="btn btn--label" href="#promocoes">Ver promoções</a>
-            <a class="btn btn--ghost" href={links.whatsapp} data-link="whatsapp" target="_blank" rel="noopener noreferrer" hidden={!links.whatsapp}>
+            <a class="btn btn--ghost" href={links.whatsapp} data-link="whatsapp" {...ext} hidden={!links.whatsapp}>
               <Icon name="whatsapp" />
               Chamar no WhatsApp
+            </a>
+            <a class="btn btn--ghost" href={links.phone} data-link="phone" data-fallback hidden={!links.phone || !!links.whatsapp}>
+              <Icon name="phone" />
+              <span data-label="phone">{links.phoneLabel}</span>
             </a>
           </div>
         </div>
       </div>
     </section>
 
+    <figure class="storefront">
+      <img
+        src="/media/salao-1360.webp"
+        srcset="/media/salao-800.webp 800w, /media/salao-1360.webp 1360w"
+        sizes="100vw"
+        width="1360"
+        height="570"
+        alt="Salão do Empório Frades, com gôndolas e paredes de prateleiras cheias de vinhos e uma mesa de espumantes no centro"
+        fetchpriority="high"
+        decoding="async"
+      />
+    </figure>
+
     <section class="promos awning on-bottle" id="promocoes" aria-labelledby="promos-title" data-promos>
       <div class="wrap promos__head">
         <div>
           <h2 class="section-title" id="promos-title">Promoções da semana</h2>
-          <p class="section-lead">Preços válidos na loja enquanto durar o estoque. Para reservar, é só chamar no WhatsApp.</p>
+          <p class="section-lead">Preços válidos na loja enquanto durar o estoque. Para reservar, fale com a gente.</p>
         </div>
-        <p class="promos__count" data-promo-count aria-live="polite">
+        <p class="promos__count" data-promo-count aria-live="polite" hidden={promos.length === 0}>
           {promos.length === 1 ? '1 oferta' : `${promos.length} ofertas`}
         </p>
       </div>
 
-      <div class="rail" data-rail>
+      <div class="rail" data-rail hidden={promos.length === 0}>
         <ul class="rail__track" data-list="promotions" aria-label="Ofertas" set:html={toHTML(promos)} />
       </div>
 
       <p class="wrap promos__empty" data-promo-empty hidden={promos.length > 0}>
-        Nenhuma promoção publicada agora. As ofertas do dia saem primeiro no
-        <a href={links.whatsapp ?? '#onde-estamos'} data-link="whatsapp" target="_blank" rel="noopener noreferrer">nosso WhatsApp</a>.
+        As ofertas da semana aparecem aqui assim que forem publicadas. Enquanto isso,
+        <a href={links.phone} data-link="phone" hidden={!links.phone}>ligue para a loja</a>
+        <span data-link-sep hidden={!links.phone || !links.instagram}>ou</span>
+        <a href={links.instagram} data-link="instagram" {...ext} hidden={!links.instagram}>acompanhe o Instagram</a>.
       </p>
+
+      <p class="wrap promos__foot">Venda de bebidas alcoólicas proibida para menores de 18 anos. Beba com moderação.</p>
     </section>
 
-    <section class="hot" id="em-alta" aria-labelledby="hot-title">
+    <section class="hot" id="em-alta" aria-labelledby="hot-title" data-hot hidden={highlights.length === 0}>
       <div class="wrap hot__grid">
         <div class="hot__intro">
-          <h2 class="section-title" id="hot-title">O que mais sai no balcão</h2>
-          <p class="section-lead">Os preferidos da clientela nesta semana. Preço por unidade ou por peso, como está na etiqueta da loja.</p>
+          <h2 class="section-title" id="hot-title">Os mais procurados</h2>
+          <p class="section-lead">O que a clientela mais tem levado. Confira o preço na etiqueta da loja.</p>
         </div>
-        <ul class="menu" data-list="highlights" set:html={toHTML(highlightMenu(seed.highlights, env))} />
+        <ul class="menu" data-list="highlights" set:html={toHTML(highlights)} />
       </div>
     </section>
 
     <section class="about" aria-label="Sobre a loja">
-      <div class="wrap">
+      <div class="wrap about__grid">
         <p class="about__text" data-bind="about">{s.about}</p>
+        <figure class="about__photo">
+          <img
+            src="/media/vinhos-960.webp"
+            srcset="/media/vinhos-560.webp 560w, /media/vinhos-960.webp 960w"
+            sizes="(max-width: 860px) 100vw, 40vw"
+            width="960"
+            height="938"
+            alt="Mesa rústica com garrafas de vinho rosé, tinto e lambrusco, diante de prateleiras de vinhos e taças"
+            loading="lazy"
+            decoding="async"
+          />
+        </figure>
       </div>
     </section>
 
-    <section class="news" id="novidades" aria-labelledby="news-title">
+    <section class="news" id="novidades" aria-labelledby="news-title" data-news hidden={news.length === 0}>
       <div class="wrap">
         <h2 class="section-title" id="news-title">Novidades</h2>
-        <ol class="board" data-list="news" set:html={toHTML(newsBoard(seed.news, env))} />
-        <p class="board__empty" data-news-empty hidden={seed.news.length > 0}>Sem novidades publicadas por enquanto.</p>
+        <ol class="board" data-list="news" set:html={toHTML(news)} />
       </div>
     </section>
 
@@ -169,26 +228,29 @@ const jsonLd = {
             <p class="visit__ref" data-bind="reference" hidden={!s.reference}>{s.reference}</p>
 
             <div class="visit__actions">
-              <a class="btn btn--label" href={links.maps} data-link="maps" target="_blank" rel="noopener noreferrer">
+              <a class="btn btn--label" href={links.maps} data-link="maps" {...ext}>
                 <Icon name="route" />
                 Como chegar
               </a>
-              <a class="btn btn--ghost" href={links.waze} data-link="waze" target="_blank" rel="noopener noreferrer">Abrir no Waze</a>
+              <a class="btn btn--ghost" href={links.waze} data-link="waze" {...ext}>Abrir no Waze</a>
             </div>
 
             <div class="hours">
               <h3 class="hours__title">Horário de funcionamento</h3>
-              <ul data-list="hours" set:html={toHTML(hoursList(s, {...env}))} />
+              <ul data-list="hours" set:html={toHTML(hoursList(s, env))} />
             </div>
 
             <div class="contacts">
               <a href={links.phone} data-link="phone" hidden={!links.phone}>
-                Telefone <span data-label="phone">{links.phoneLabel}</span>
+                <Icon name="phone" />
+                <span data-label="phone">{links.phoneLabel}</span>
               </a>
-              <a href={links.whatsapp} data-link="whatsapp" target="_blank" rel="noopener noreferrer" hidden={!links.whatsapp}>
-                WhatsApp <span data-label="whatsapp">{links.whatsappLabel}</span>
+              <a href={links.whatsapp} data-link="whatsapp" {...ext} hidden={!links.whatsapp}>
+                <Icon name="whatsapp" />
+                <span data-label="whatsapp">{links.whatsappLabel}</span>
               </a>
               <a href={links.email} data-link="email" hidden={!links.email}>
+                <Icon name="mail" />
                 <span data-label="email">{links.emailLabel}</span>
               </a>
             </div>
@@ -224,8 +286,8 @@ const jsonLd = {
         <div>
           <h2>Contato</h2>
           <ul>
-            <li><a href={links.whatsapp} data-link="whatsapp" target="_blank" rel="noopener noreferrer" hidden={!links.whatsapp}>WhatsApp</a></li>
             <li><a href={links.phone} data-link="phone" hidden={!links.phone}>Ligar para a loja</a></li>
+            <li><a href={links.whatsapp} data-link="whatsapp" {...ext} hidden={!links.whatsapp}>WhatsApp</a></li>
             <li><a href={links.email} data-link="email" hidden={!links.email}>E-mail</a></li>
           </ul>
         </div>
@@ -234,15 +296,23 @@ const jsonLd = {
           <ul data-list="social" set:html={toHTML(socialList(s))} />
         </div>
       </div>
-      <p class="footer__legal">© {year} <span data-bind="name">{s.name}</span>. Preços e ofertas sujeitos a alteração sem aviso e válidos somente na loja física.</p>
+      <p class="footer__legal">
+        Venda de bebidas alcoólicas proibida para menores de 18 anos. Se beber, não dirija.<br />
+        © {year} <span data-bind="name">{s.name}</span>. Preços e ofertas sujeitos a alteração sem aviso e válidos somente na loja física.
+      </p>
     </div>
   </footer>
 
-  <a class="btn btn--label float-wa" href={links.whatsapp} data-link="whatsapp" target="_blank" rel="noopener noreferrer" data-float-wa data-visible="false" hidden={!links.whatsapp}>
+  <a class="btn btn--label float-cta" href={links.whatsapp} data-link="whatsapp" {...ext} data-float-cta data-visible="false" hidden={!links.whatsapp}>
     <Icon name="whatsapp" />
     <span>WhatsApp</span>
   </a>
+  <a class="btn btn--label float-cta" href={links.phone} data-link="phone" data-fallback data-float-cta data-visible="false" hidden={!links.phone || !!links.whatsapp}>
+    <Icon name="phone" />
+    <span>Ligar</span>
+  </a>
 
+  <script type="application/json" id="initial-content" is:inline set:html={initial}></script>
   <script>
     import { initSite } from '../scripts/site';
     initSite();

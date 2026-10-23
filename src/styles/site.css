@@ -219,13 +219,30 @@ a:hover {
   min-height: 4.25rem;
 }
 
-.wordmark {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-stretch: 92%;
-  font-size: 1.25rem;
-  letter-spacing: -0.01em;
+.brand-link {
+  display: inline-flex;
   text-decoration: none;
+  border-radius: 2px;
+}
+
+/* Marca no estilo da placa: quadro verde, filete cobre, letras douradas */
+.logo {
+  display: inline-grid;
+  justify-items: center;
+  gap: 0.05rem;
+  padding: 0.42rem 0.75rem 0.38rem;
+  background: var(--brand);
+  color: var(--gold);
+  box-shadow:
+    inset 0 0 0 2px var(--brand),
+    inset 0 0 0 3.5px var(--copper);
+  font-family: var(--font-display);
+  font-stretch: 96%;
+  font-weight: 560;
+  font-size: 0.8rem;
+  line-height: 1.05;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -347,7 +364,7 @@ a:hover {
   font-size: clamp(4.2rem, 17.4vw, 17.5rem);
   line-height: 0.87;
   letter-spacing: -0.035em;
-  color: var(--bottle);
+  color: var(--brand);
 }
 
 /* Abertura em CSS: roda antes do JavaScript, sem piscar.
@@ -471,6 +488,21 @@ a:hover {
   }
 }
 
+/* ---------- Foto do salão ---------- */
+
+.storefront {
+  height: clamp(15rem, 38vw, 34rem);
+  overflow: hidden;
+  background: var(--paper-2);
+}
+
+.storefront img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 45%;
+}
+
 /* ---------- Toldo (borda recortada das seções verdes) ---------- */
 
 .awning {
@@ -496,7 +528,6 @@ a:hover {
   background: var(--bottle);
   color: var(--on-bottle);
   padding-block: var(--section);
-  margin-top: 22px;
 }
 
 .promos__head {
@@ -707,7 +738,7 @@ a:hover {
 }
 
 .promos__foot {
-  margin-top: 1.5rem;
+  margin-top: 2.5rem;
   color: var(--on-bottle-2);
   font-size: var(--step--1);
 }
@@ -741,7 +772,7 @@ a:hover {
   font-weight: 650;
   font-size: var(--step--1);
   letter-spacing: 0.02em;
-  color: var(--wine);
+  color: var(--copper-ink);
   padding-bottom: 0.6rem;
   border-bottom: 2px solid var(--ink);
 }
@@ -832,7 +863,41 @@ a:hover {
 /* ---------- Sobre ---------- */
 
 .about {
-  padding-block: 0 var(--section);
+  padding-block: var(--section);
+}
+
+.hot + .about {
+  padding-top: 0;
+}
+
+.about__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.9fr);
+  gap: 3rem clamp(2rem, 1rem + 5vw, 6rem);
+  align-items: center;
+}
+
+.about__photo {
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: var(--radius-s);
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.about__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 860px) {
+  .about__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .about__photo {
+    aspect-ratio: 4 / 3;
+  }
 }
 
 .about__text {
@@ -873,7 +938,7 @@ a:hover {
 .board__date {
   grid-area: date;
   font-weight: 600;
-  color: var(--wine);
+  color: var(--copper-ink);
   padding-top: 0.35rem;
 }
 
@@ -987,7 +1052,18 @@ a:hover {
 }
 
 .contacts a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
   font-weight: 600;
+  justify-self: start;
+  padding-block: 0.2rem;
+}
+
+.contacts svg {
+  width: 1.1em;
+  height: 1.1em;
+  color: var(--brand);
 }
 
 /* Mapa: carrega só quando a pessoa pede (desempenho e privacidade) */
@@ -1076,7 +1152,7 @@ a:hover {
   font-size: clamp(3rem, 11vw, 10rem);
   line-height: 0.85;
   letter-spacing: -0.035em;
-  color: var(--label);
+  color: var(--gold);
 }
 
 .footer__grid {
@@ -1105,9 +1181,9 @@ a:hover {
   color: var(--on-bottle-2);
 }
 
-/* ---------- WhatsApp flutuante (celular) ---------- */
+/* ---------- Botão de contato flutuante (celular) ---------- */
 
-.float-wa {
+.float-cta {
   position: fixed;
   right: 1rem;
   bottom: calc(1rem + env(safe-area-inset-bottom));
@@ -1120,11 +1196,11 @@ a:hover {
 }
 
 @media (max-width: 860px) {
-  .float-wa {
+  .float-cta {
     display: inline-flex;
   }
 
-  .float-wa[data-visible='false'] {
+  .float-cta[data-visible='false'] {
     transform: translateY(150%);
     opacity: 0;
     pointer-events: none;

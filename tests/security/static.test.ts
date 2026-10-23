@@ -90,10 +90,16 @@ describe('varredura do código-fonte', () => {
     expect(hits).toEqual([]);
   });
 
-  it('set:html só recebe saída de toHTML (que escapa tudo) ou JSON-LD escapado', () => {
+  it('set:html só recebe saída de toHTML (que escapa tudo) ou JSON com "<" escapado', () => {
     for (const f of files.filter((x) => x.endsWith('.astro'))) {
-      for (const m of readFileSync(f, 'utf8').matchAll(/set:html=\{([^}]+)\}/g)) {
-        expect(m[1]!.trim()).toMatch(/^toHTML\(|^ld$/);
+      const src = readFileSync(f, 'utf8');
+      for (const m of src.matchAll(/set:html=\{([^}]+)\}/g)) {
+        const expr = m[1]!.trim();
+        expect(expr).toMatch(/^toHTML\(|^ld$|^initial$/);
+        if (expr === 'ld' || expr === 'initial') {
+          // a variável precisa ter sido gerada com JSON.stringify(...).replace(/</g, ...)
+          expect(src).toMatch(new RegExp(`const ${expr} = .*JSON\\.stringify\\(.*\\.replace\\(/</g`));
+        }
       }
     }
   });
@@ -116,10 +122,20 @@ describe('HTML gerado (dist/)', () => {
   it.skipIf(html.length === 0)('sem <script> executável embutido, sem style="" e sem on*=', () => {
     for (const f of html) {
       const s = readFileSync(f, 'utf8');
-      const inlineScripts = [...s.matchAll(/<script(?![^>]*\bsrc=)([^>]*)>/g)].filter((m) => !/application\/ld\+json/.test(m[1]!));
+      const inlineScripts = [...s.matchAll(/<script(?![^>]*\bsrc=)([^>]*)>/g)].filter((m) => !/type="application\/(ld\+)?json"/.test(m[1]!));
       expect(inlineScripts, f).toEqual([]);
       expect(s, f).not.toMatch(/\sstyle="/);
       expect(s, f).not.toMatch(/\son[a-z]+="/i);
+    }
+  });
+
+  it.skipIf(html.length === 0)('blocos JSON embutidos não conseguem fechar a tag </script>', () => {
+    for (const f of html) {
+      const s = readFileSync(f, 'utf8');
+      for (const m of s.matchAll(/<script type="application\/(?:ld\+)?json"[^>]*>([\s\S]*?)<\/script>/g)) {
+        expect(m[1], f).not.toContain('<');
+        expect(() => JSON.parse(m[1]!), f).not.toThrow();
+      }
     }
   });
 

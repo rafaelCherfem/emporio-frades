@@ -106,8 +106,10 @@ tests/                     unitários, segurança, e2e
 
 ## Antes de publicar
 
-- [ ] Endereço, telefones, WhatsApp, redes e horários reais (no painel e em `src/data/seed.ts`, que é o conteúdo de reserva)
-- [ ] Coordenadas da loja (deixa o mapa exato)
-- [ ] Logo: hoje o site usa o nome em tipografia. Com uma foto boa da placa, dá para vetorizar a marca e trocar o `favicon.svg` e o `og.png`
-- [ ] Fotos dos produtos e da fachada
+Dados da loja já preenchidos (em `src/data/seed.ts` e `supabase/seed.sql`): Av. do Cursino, 129, Vila da Saúde, São Paulo, CEP 04133-000; telefone (11) 3542-9564; Instagram @emporiofrades_; seg. a sex. 9h às 19h, sáb. 9h às 18h, dom. fechado. Sem WhatsApp por enquanto: os botões principais mostram "Ligar". Quando houver WhatsApp, basta cadastrar no painel que os botões trocam sozinhos.
+
+- [ ] **Fotos**: as do salão (`public/media/`) vieram do perfil da loja no Google. Confirme com o dono que pode usá-las (ou substitua por fotos próprias, com os mesmos nomes de arquivo). A foto da fachada não foi usada porque é do Street View.
+- [ ] **Grafia da marca**: a placa diz "FRADE'S"; Instagram e Google dizem "Frades". O site usa "Frades". Confirmar com o dono.
+- [ ] Coordenadas da loja no painel (deixa o mapa exato; sem elas, o mapa busca pelo endereço)
 - [ ] Domínio atualizado em `astro.config.mjs`, `robots.txt` e `sitemap.xml`
+- [ ] Promoções e produtos reais cadastrados pelo painel (os do modo demonstração nunca aparecem com o Supabase configurado)

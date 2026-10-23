@@ -10,7 +10,7 @@ interface Props {
 
 const { title, description, noindex = false, jsonLd } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
-const ogImage = new URL('/og.png', Astro.site);
+const ogImage = new URL('/og.jpg', Astro.site);
 
 // JSON-LD é bloco de dados (não executa). Ainda assim, escapamos "<" para
 // impedir que um texto do banco feche a tag </script>.

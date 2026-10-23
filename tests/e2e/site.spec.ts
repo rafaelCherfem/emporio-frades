@@ -76,15 +76,44 @@ test.describe('site público', () => {
     // As outras listas válidas continuam chegando; só a linha inválida é descartada
     await expect(page.locator('.tag__title')).toHaveText(['Promo válida chega normalmente']);
     await expect(page.locator('[data-bind="tagline"]')).not.toHaveText('Não deveria aparecer');
-    await expect(page.locator('.contacts a[data-link="whatsapp"]')).toHaveAttribute('href', /^https:\/\/wa\.me\/\d+/);
+    // Mantém os dados reais da loja embutidos no build
+    await expect(page.locator('.contacts a[data-link="phone"]')).toHaveAttribute('href', 'tel:+551135429564');
   });
 
-  test('banco fora do ar: o site continua com o conteúdo de reserva', async ({ page }) => {
+  test('banco fora do ar: dados reais da loja continuam e NENHUM preço fictício aparece', async ({ page }) => {
     await fakeSupabase(page, { failRest: true });
     await page.goto('/');
-    await expect(page.locator('.tag').first()).toBeVisible();
-    await expect(page.locator('.menu__item').first()).toBeVisible();
     await expect(page.locator('[data-status]')).toBeVisible();
+    await expect(page.locator('.visit__address')).toContainText('Av. do Cursino, 129');
+    await expect(page.locator('.hours__row')).toHaveText([/Segunda a sexta\s*9h às 19h/, /Sábado\s*9h às 18h/, /Domingo\s*Fechado/]);
+    await expect(page.locator('.tag')).toHaveCount(0);
+    await expect(page.locator('[data-promo-empty]')).toBeVisible();
+    await expect(page.getByText('Lambrusco tinto italiano')).toHaveCount(0);
+    await expect(page.locator('.demo-banner')).toHaveCount(0);
+    // Seções sem conteúdo somem, e o menu acompanha
+    await expect(page.locator('#em-alta')).toBeHidden();
+    await expect(page.locator('#novidades')).toBeHidden();
+    await expect(page.locator('.nav__list a[href="#novidades"]')).toBeHidden();
+  });
+
+  test('sem WhatsApp cadastrado, os botões viram "Ligar"', async ({ page, isMobile }) => {
+    await fakeSupabase(page, { settings: { whatsapp: '' }, promotions: [promo()] });
+    await page.goto('/');
+    await expect(page.locator('[data-bind="tagline"]')).toHaveText('Frase vinda do banco.');
+    await expect(page.locator('a[data-link="whatsapp"]:visible')).toHaveCount(0);
+    const call = page.locator('.hero__actions a[data-link="phone"]');
+    await expect(call).toBeVisible();
+    await expect(call).toHaveAttribute('href', 'tel:+551933334444');
+    if (!isMobile) await expect(page.locator('.header a[data-link="phone"]')).toBeVisible();
+  });
+
+  test('com WhatsApp cadastrado, "Ligar" dá lugar ao WhatsApp nos botões principais', async ({ page }) => {
+    await fakeSupabase(page);
+    await page.goto('/');
+    await expect(page.locator('.hero__actions a[data-link="whatsapp"]')).toBeVisible();
+    await expect(page.locator('.hero__actions a[data-link="phone"]')).toBeHidden();
+    // O telefone continua disponível na seção de contato
+    await expect(page.locator('.contacts a[data-link="phone"]')).toBeVisible();
   });
 
   test('sem promoções ativas mostra o aviso e esconde o trilho', async ({ page }) => {

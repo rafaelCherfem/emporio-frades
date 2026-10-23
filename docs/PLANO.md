@@ -87,14 +87,17 @@ Risco residual: conta do dono comprometida. Recomendações: senha longa única,
 
 Princípio: o site parece uma loja real, não um template. O fio condutor é a **etiqueta de gôndola** (as etiquetas amarelas de preço nas prateleiras) e a **placa da fachada**.
 
-**Paleta**
+**Paleta** (tirada da placa da fachada: quadro verde, filete cobre, letras douradas; e das etiquetas amarelas de preço que a loja já usa nas prateleiras)
 
 | Nome | Hex | Uso |
 | --- | --- | --- |
 | Papel | `#E8EBE2` | fundo principal (cinza esverdeado frio, não creme) |
-| Verde-garrafa | `#1E3B2F` | blocos de cor, rodapé, texto de destaque |
+| Verde da placa | `#1F5E2C` | nome da loja, logo, ícones |
+| Verde fundo | `#1B4426` | blocos de cor (promoções, rodapé, mapa) |
+| Cobre | `#C08550` / `#8A5322` | filete da logo / categorias e datas (versão escura, contraste AA) |
+| Dourado | `#EDC56E` | letras da logo e nome no rodapé |
 | Etiqueta | `#F4C430` | exclusivamente nas etiquetas de preço e no botão principal |
-| Tinto | `#8C2233` | preço "por" e avisos de oferta |
+| Tinto | `#8C2233` | preço "de" riscado e percentual de desconto |
 | Tinta | `#17201B` | texto |
 
 **Tipografia** (hospedada localmente, sem CDN)
@@ -102,9 +105,11 @@ Princípio: o site parece uma loja real, não um template. O fio condutor é a *
 - Texto: Instrument Sans, legível e neutra.
 
 **Layout**
-- Hero: nome da loja em escala de fachada, ocupando a largura. O eixo de largura da fonte anima no scroll (o momento memorável da página). Abaixo, estado ao vivo: "Aberto agora, fecha às 21h".
+- Cabeçalho: logo no estilo da placa (quadro verde, filete cobre, letras douradas) e botão de contato (WhatsApp se houver, senão "Ligar").
+- Hero: nome da loja em escala de fachada, ocupando a largura. O eixo de largura da fonte anima no scroll (o momento memorável da página). Abaixo, estado ao vivo: "Aberto agora, fecha às 19h".
+- Foto do salão em faixa inteira; o toldo recortado da seção de promoções passa por cima dela, como na fachada.
 - Promoções: trilho horizontal fixado (pin) com etiquetas de preço de verdade, rolando lateralmente conforme o scroll vertical. Em celular vira lista rolável.
-- Em alta: lista no estilo de cardápio, com linha pontilhada entre nome e preço. Sem grade de cartões idênticos.
+- Mais procurados: lista no estilo de cardápio, com linha pontilhada entre nome e preço. Sem grade de cartões idênticos.
 - Novidades: mural de avisos, entradas com data.
 - Onde estamos: endereço, horários com o dia de hoje marcado, mapa, botões de ligar e WhatsApp.
 

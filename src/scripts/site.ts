@@ -1,9 +1,16 @@
-import { seed } from '../data/seed';
 import { fetchContent } from '../lib/api';
 import { readConfig } from '../lib/config';
 import { openStatus } from '../lib/hours';
 import { mapEmbedSrc } from '../lib/safe';
-import type { SiteContent, StoreSettings } from '../lib/schemas';
+import {
+  highlightSchema,
+  newsSchema,
+  parseList,
+  promotionSchema,
+  storeSettingsSchema,
+  type SiteContent,
+  type StoreSettings,
+} from '../lib/schemas';
 import {
   addressLines,
   contactLinks,
@@ -21,7 +28,27 @@ const cfg = readConfig();
 const $ = <T extends Element = HTMLElement>(sel: string, root: ParentNode = document) => root.querySelector<T>(sel);
 const $$ = <T extends Element = HTMLElement>(sel: string, root: ParentNode = document) => [...root.querySelectorAll<T>(sel)];
 
-let content: SiteContent = seed;
+/**
+ * Conteúdo com que o HTML foi gerado (bloco application/json na página).
+ * Revalidado aqui: o navegador nunca confia em dado sem passar pelo schema.
+ */
+function readInitial(): SiteContent | null {
+  try {
+    const raw = JSON.parse($('#initial-content')?.textContent ?? 'null') as Partial<Record<keyof SiteContent, unknown>> | null;
+    const settings = storeSettingsSchema.safeParse(raw?.settings);
+    if (!settings.success) return null;
+    return {
+      settings: settings.data,
+      promotions: parseList(promotionSchema, raw?.promotions),
+      highlights: parseList(highlightSchema, raw?.highlights),
+      news: parseList(newsSchema, raw?.news),
+    };
+  } catch {
+    return null;
+  }
+}
+
+let content: SiteContent | null = readInitial();
 
 /* ---------- Dados da loja ---------- */
 
@@ -57,7 +84,9 @@ function applySettings(s: StoreSettings) {
   for (const el of $$<HTMLAnchorElement>('a[data-link]')) {
     const key = el.dataset['link'] as keyof ContactLinks;
     const href = links[key];
-    if (typeof href === 'string' && href) {
+    // Botões "Ligar" com data-fallback só aparecem quando não há WhatsApp
+    const isFallback = el.hasAttribute('data-fallback');
+    if (typeof href === 'string' && href && !(isFallback && links.whatsapp)) {
       el.href = href;
       el.hidden = false;
       if (href.startsWith('https://')) {
@@ -69,6 +98,8 @@ function applySettings(s: StoreSettings) {
       el.hidden = true;
     }
   }
+  const sep = $('[data-link-sep]');
+  if (sep) sep.hidden = !links.phone || !links.instagram;
 
   const social = $('[data-list="social"]');
   if (social) mount(social, socialList(s));
@@ -100,21 +131,38 @@ function renderLists(c: SiteContent) {
   const promoList = $('[data-list="promotions"]');
   if (promoList) mount(promoList, promos);
   const count = $('[data-promo-count]');
-  if (count) count.textContent = promos.length === 1 ? '1 oferta' : `${promos.length} ofertas`;
+  if (count) {
+    count.textContent = promos.length === 1 ? '1 oferta' : `${promos.length} ofertas`;
+    count.hidden = promos.length === 0;
+  }
   const rail = $('[data-rail]');
   if (rail) rail.hidden = promos.length === 0;
   const empty = $('[data-promo-empty]');
   if (empty) empty.hidden = promos.length > 0;
-  if (count) count.hidden = promos.length === 0;
 
-  const hl = $('[data-list="highlights"]');
-  if (hl) mount(hl, highlightMenu(c.highlights, env));
+  // Seções sem conteúdo somem (em vez de mostrar um bloco vazio)
+  const hl = highlightMenu(c.highlights, env);
+  const hlList = $('[data-list="highlights"]');
+  if (hlList) mount(hlList, hl);
+  const hot = $('[data-hot]');
+  if (hot) hot.hidden = hl.length === 0;
 
   const news = newsBoard(c.news, env);
   const newsList = $('[data-list="news"]');
   if (newsList) mount(newsList, news);
-  const newsEmpty = $('[data-news-empty]');
-  if (newsEmpty) newsEmpty.hidden = news.length > 0;
+  const newsSection = $('[data-news]');
+  if (newsSection) newsSection.hidden = news.length === 0;
+
+  syncNav();
+}
+
+/** Menu só mostra links para seções visíveis. */
+function syncNav() {
+  for (const a of $$<HTMLAnchorElement>('.nav__list a')) {
+    const target = document.getElementById(a.hash.slice(1));
+    const li = a.closest('li');
+    if (li && target) li.hidden = target.hidden;
+  }
 }
 
 /* ---------- Interface ---------- */
@@ -143,13 +191,12 @@ function initNav() {
 function initHeaderState() {
   const header = $('[data-header]');
   const hero = $('#topo');
-  const floatWa = $('[data-float-wa]');
   if (!header || !hero) return;
   const io = new IntersectionObserver(
     ([entry]) => {
       const past = !entry!.isIntersecting;
       header.dataset['scrolled'] = String(past);
-      if (floatWa) floatWa.dataset['visible'] = String(past);
+      for (const f of $$('[data-float-cta]')) f.dataset['visible'] = String(past);
     },
     { rootMargin: '-80px 0px 0px 0px' },
   );
@@ -178,6 +225,7 @@ function initMap() {
   const box = $('[data-map]');
   if (!btn || !box) return;
   btn.addEventListener('click', () => {
+    if (!content) return;
     const s = content.settings;
     const iframe = document.createElement('iframe');
     iframe.src = mapEmbedSrc(s.latitude, s.longitude, `${s.name}, ${addressLines(s).join(', ')}`);
@@ -197,17 +245,18 @@ export async function initSite() {
   initNav();
   initHeaderState();
   initMap();
-  renderStatus(content.settings);
-  renderHours(content.settings);
-  // Reaplica as listas com a data atual (o HTML do build pode ter promoções já vencidas)
-  renderLists(content);
+  if (content) {
+    renderStatus(content.settings);
+    renderHours(content.settings);
+    // Reaplica as listas com a data de AGORA: some o que venceu desde o build
+    renderLists(content);
+  }
   initMotion();
 
-  // Status de aberto/fechado atualizado a cada minuto
-  setInterval(() => renderStatus(content.settings), 60_000);
+  setInterval(() => content && renderStatus(content.settings), 60_000);
 
   const live = await fetchContent(cfg);
-  if (!live) return;
+  if (!live || !content) return;
   content = {
     settings: live.settings ?? content.settings,
     promotions: live.promotions ?? content.promotions,

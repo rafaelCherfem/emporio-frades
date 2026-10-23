@@ -42,12 +42,16 @@
 }
 
 :root {
-  /* Paleta (docs/PLANO.md, seção 5) */
+  /* Paleta a partir da placa da fachada (docs/PLANO.md, seção 5) */
   --paper: #e8ebe2;
   --paper-2: #dde2d5;
-  --bottle: #1e3b2f;
-  --bottle-2: #284c3d;
-  --label: #f4c430;
+  --brand: #1f5e2c; /* verde da placa */
+  --bottle: #1b4426; /* verde da placa, mais fundo, para blocos */
+  --bottle-2: #26573a;
+  --copper: #c08550; /* filete da placa: só decorativo */
+  --copper-ink: #8a5322; /* cobre escurecido para texto (contraste AA) */
+  --gold: #edc56e; /* letras da placa (clareado p/ contraste AA 4,7:1 sobre o verde) */
+  --label: #f4c430; /* etiqueta de preço, como as da loja */
   --label-2: #e9b516;
   --wine: #8c2233;
   --ink: #17201b;
@@ -55,7 +59,7 @@
   --line: rgb(23 32 27 / 0.16);
   --line-strong: rgb(23 32 27 / 0.42);
   --on-bottle: #e8ebe2;
-  --on-bottle-2: #b7c4b9;
+  --on-bottle-2: #b9c8bb;
 
   /* Tipografia */
   --font-display: 'Archivo Variable', 'Arial Narrow', system-ui, sans-serif;

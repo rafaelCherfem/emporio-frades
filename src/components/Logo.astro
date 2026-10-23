@@ -1,0 +1,15 @@
+---
+/**
+ * Marca no estilo da placa da fachada: quadro verde com filete cobre e letras
+ * douradas em caixa-alta. O texto acessível é o nome normal da loja.
+ */
+interface Props {
+  class?: string;
+}
+const { class: cls } = Astro.props;
+---
+
+<span class:list={['logo', cls]}>
+  <span class="logo__line">Empório</span>
+  <span class="logo__line">Frades</span>
+</span>

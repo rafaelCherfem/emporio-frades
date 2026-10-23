@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { seed } from '../../src/data/seed';
+import { demoContent as seed, storeSettings } from '../../src/data/seed';
 import { centsToInput, formatBRL, isPromotionActive, parseBRLToCents, splitPrice } from '../../src/lib/format';
 import { groupHours, openStatus } from '../../src/lib/hours';
 import { highlightSchema, parseList, promotionSchema, storeSettingsSchema } from '../../src/lib/schemas';
@@ -37,42 +37,63 @@ describe('preços', () => {
   });
 });
 
-describe('horário de funcionamento', () => {
-  const hours = seed.settings.hours;
+describe('horário de funcionamento (horário real da loja)', () => {
+  const hours = storeSettings.hours;
 
   it('aberto no meio da tarde de quarta', () => {
-    expect(openStatus(hours, brt('2026-10-21T15:00:00'))).toEqual({ open: true, label: 'Aberto agora, fecha às 20h' });
+    expect(openStatus(hours, brt('2026-10-21T15:00:00'))).toEqual({ open: true, label: 'Aberto agora, fecha às 19h' });
   });
 
   it('fechado antes de abrir', () => {
-    expect(openStatus(hours, brt('2026-10-21T07:30:00')).label).toBe('Fechado, abre hoje às 8h');
+    expect(openStatus(hours, brt('2026-10-21T08:30:00')).label).toBe('Fechado, abre hoje às 9h');
   });
 
   it('fechado à noite aponta para amanhã', () => {
-    expect(openStatus(hours, brt('2026-10-21T22:00:00')).label).toBe('Fechado, abre amanhã às 8h');
+    expect(openStatus(hours, brt('2026-10-21T19:00:00')).label).toBe('Fechado, abre amanhã às 9h');
   });
 
-  it('domingo à tarde fechado, abre segunda', () => {
-    expect(openStatus(hours, brt('2026-10-25T14:00:00')).label).toBe('Fechado, abre amanhã às 8h');
+  it('sábado fecha mais cedo', () => {
+    expect(openStatus(hours, brt('2026-10-24T17:30:00')).label).toBe('Aberto agora, fecha às 18h');
+  });
+
+  it('sábado à noite pula o domingo fechado', () => {
+    expect(openStatus(hours, brt('2026-10-24T18:30:00')).label).toBe('Fechado, abre segunda às 9h');
+  });
+
+  it('domingo: fechado, abre amanhã', () => {
+    expect(openStatus(hours, brt('2026-10-25T11:00:00')).label).toBe('Fechado, abre amanhã às 9h');
   });
 
   it('usa o fuso da loja, não o do visitante', () => {
-    // 23h UTC = 20h em Brasília (fechado na quarta)
-    expect(openStatus(hours, new Date('2026-10-21T23:00:00Z')).open).toBe(false);
+    // 22h30 UTC = 19h30 em Brasília (fechado na quarta)
+    expect(openStatus(hours, new Date('2026-10-21T22:30:00Z')).open).toBe(false);
   });
 
   it('expediente que passa da meia-noite', () => {
-    const late = hours.map((h) => ({ ...h, open: '18:00', close: '02:00' }));
+    const late = hours.map((h) => ({ ...h, closed: false, open: '18:00', close: '02:00' }));
     expect(openStatus(late, brt('2026-10-22T01:00:00')).label).toBe('Aberto agora, fecha às 2h');
     expect(openStatus(late, brt('2026-10-22T03:00:00')).label).toBe('Fechado, abre hoje às 18h');
   });
 
   it('agrupa dias iguais', () => {
     expect(groupHours(hours).map((g) => `${g.days}: ${g.time}`)).toEqual([
-      'Segunda a quinta: 8h às 20h',
-      'Sexta e sábado: 8h às 21h',
-      'Domingo: 9h às 13h',
+      'Segunda a sexta: 9h às 19h',
+      'Sábado: 9h às 18h',
+      'Domingo: Fechado',
     ]);
+  });
+});
+
+describe('dados reais da loja', () => {
+  it('são válidos e geram os links certos', async () => {
+    const { contactLinks } = await import('../../src/lib/views');
+    expect(storeSettingsSchema.safeParse(storeSettings).success).toBe(true);
+    const l = contactLinks(storeSettings);
+    expect(l.phone).toBe('tel:+551135429564');
+    expect(l.phoneLabel).toBe('(11) 3542-9564');
+    expect(l.whatsapp).toBeNull();
+    expect(l.instagram).toBe('https://www.instagram.com/emporiofrades_/');
+    expect(l.maps).toContain(encodeURIComponent('Av. do Cursino, 129'));
   });
 });
 

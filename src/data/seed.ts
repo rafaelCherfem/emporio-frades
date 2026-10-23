@@ -1,157 +1,71 @@
-import type { SiteContent } from '../lib/schemas';
+import type { SiteContent, StoreSettings } from '../lib/schemas';
 
 /**
- * Conteúdo de reserva. Usado:
- *  - no HTML gerado no build (SEO e quem navega sem JavaScript);
- *  - quando o banco não responde.
- *
- * Depois que o Supabase estiver configurado, o dono edita tudo pelo painel
- * e este arquivo vira só uma rede de segurança. Troque os dados de contato
- * abaixo pelos reais antes de publicar.
+ * Dados reais da loja. Usados no HTML gerado no build e como reserva quando o
+ * banco não responde. Depois de configurado o Supabase, o dono edita tudo pelo
+ * painel; mantenha este arquivo atualizado só como rede de segurança.
  */
+export const storeSettings: StoreSettings = {
+  name: 'Empório Frades',
+  tagline: 'Vinhos, espumantes, cervejas especiais e destilados na Avenida do Cursino, com a prateleira cheia e gente que entende do assunto.',
+  about:
+    'Um empório de bairro na Vila da Saúde, com rótulos do mundo inteiro: tintos, brancos e rosés, espumantes para brindar, cervejas especiais, destilados, taças e acessórios. Passe para conhecer ou ligue para saber se temos o que você procura.',
+  street: 'Av. do Cursino',
+  number: '129',
+  district: 'Vila da Saúde',
+  city: 'São Paulo',
+  state: 'SP',
+  zip: '04133-000',
+  reference: '',
+  latitude: null,
+  longitude: null,
+  phone: '1135429564',
+  whatsapp: '',
+  whatsapp_message: '',
+  email: '',
+  instagram: 'emporiofrades_',
+  facebook: '',
+  tiktok: '',
+  hours: [
+    { day: 0, closed: true, open: '09:00', close: '18:00' },
+    { day: 1, closed: false, open: '09:00', close: '19:00' },
+    { day: 2, closed: false, open: '09:00', close: '19:00' },
+    { day: 3, closed: false, open: '09:00', close: '19:00' },
+    { day: 4, closed: false, open: '09:00', close: '19:00' },
+    { day: 5, closed: false, open: '09:00', close: '19:00' },
+    { day: 6, closed: false, open: '09:00', close: '18:00' },
+  ],
+};
 
 const DAY = 86_400_000;
 const inDays = (n: number) => new Date(Date.now() + n * DAY).toISOString();
 
-export const seed: SiteContent = {
-  settings: {
-    name: 'Empório Frades',
-    tagline: 'Comidas e bebidas escolhidas a dedo, do jeito que a gente gosta de servir em casa.',
-    about:
-      'Queijos curados, frios fatiados na hora, vinhos, cervejas especiais, azeites e aquele pão que acaba antes do almoço. Um empório de bairro, com atendimento de quem conhece cada prateleira.',
-    street: 'Rua Exemplo',
-    number: '123',
-    district: 'Centro',
-    city: 'Sua cidade',
-    state: 'SP',
-    zip: '',
-    reference: 'Ao lado da praça, em frente à padaria',
-    latitude: null,
-    longitude: null,
-    phone: '11900000000',
-    whatsapp: '11900000000',
-    whatsapp_message: 'Olá! Vi o site do Empório Frades e queria fazer uma pergunta.',
-    email: '',
-    instagram: 'emporiofrades',
-    facebook: '',
-    tiktok: '',
-    hours: [
-      { day: 0, closed: false, open: '09:00', close: '13:00' },
-      { day: 1, closed: false, open: '08:00', close: '20:00' },
-      { day: 2, closed: false, open: '08:00', close: '20:00' },
-      { day: 3, closed: false, open: '08:00', close: '20:00' },
-      { day: 4, closed: false, open: '08:00', close: '20:00' },
-      { day: 5, closed: false, open: '08:00', close: '21:00' },
-      { day: 6, closed: false, open: '08:00', close: '21:00' },
-    ],
-  },
+/**
+ * Conteúdo de EXEMPLO. Aparece só no modo demonstração (sem Supabase
+ * configurado). Com o banco ligado, o site nunca mostra estes preços.
+ */
+export const demoContent: SiteContent = {
+  settings: storeSettings,
   promotions: [
-    {
-      id: 'seed-promo-1',
-      title: 'Queijo meia cura artesanal',
-      description: 'Da Serra da Canastra, cortado na hora.',
-      price_from_cents: 8990,
-      price_cents: 6990,
-      unit: 'kg',
-      starts_at: null,
-      ends_at: inDays(6),
-      image_path: null,
-      image_alt: '',
-      sort_order: 1,
-      published: true,
-    },
-    {
-      id: 'seed-promo-2',
-      title: 'Vinho tinto Malbec',
-      description: 'Mendoza, 750 ml. Leve 3 e ganhe 10% no caixa.',
-      price_from_cents: 7490,
-      price_cents: 5990,
-      unit: 'garrafa',
-      starts_at: null,
-      ends_at: inDays(9),
-      image_path: null,
-      image_alt: '',
-      sort_order: 2,
-      published: true,
-    },
-    {
-      id: 'seed-promo-3',
-      title: 'Azeite extravirgem português',
-      description: 'Garrafa de 500 ml, acidez máxima 0,3%.',
-      price_from_cents: 5490,
-      price_cents: 4290,
-      unit: 'un',
-      starts_at: null,
-      ends_at: inDays(4),
-      image_path: null,
-      image_alt: '',
-      sort_order: 3,
-      published: true,
-    },
-    {
-      id: 'seed-promo-4',
-      title: 'Presunto parma fatiado',
-      description: 'Bandeja montada no balcão.',
-      price_from_cents: 3290,
-      price_cents: 2690,
-      unit: '100 g',
-      starts_at: null,
-      ends_at: inDays(5),
-      image_path: null,
-      image_alt: '',
-      sort_order: 4,
-      published: true,
-    },
-    {
-      id: 'seed-promo-5',
-      title: 'Cerveja IPA artesanal',
-      description: 'Lata de 473 ml, de cervejaria local.',
-      price_from_cents: 2290,
-      price_cents: 1790,
-      unit: 'lata',
-      starts_at: null,
-      ends_at: inDays(3),
-      image_path: null,
-      image_alt: '',
-      sort_order: 5,
-      published: true,
-    },
+    { id: 'seed-promo-1', title: 'Lambrusco tinto italiano', description: 'Frisante e levemente adocicado, 750 ml.', price_from_cents: 3490, price_cents: 2950, unit: 'garrafa', starts_at: null, ends_at: inDays(6), image_path: null, image_alt: '', sort_order: 1, published: true },
+    { id: 'seed-promo-2', title: 'Vinho chileno reserva', description: 'Carménère do Vale Central. Leve 3 e ganhe 10% no caixa.', price_from_cents: 7490, price_cents: 5990, unit: 'garrafa', starts_at: null, ends_at: inDays(9), image_path: null, image_alt: '', sort_order: 2, published: true },
+    { id: 'seed-promo-3', title: 'Espumante brut nacional', description: 'Serra Gaúcha, método tradicional.', price_from_cents: 8990, price_cents: 6990, unit: 'garrafa', starts_at: null, ends_at: inDays(4), image_path: null, image_alt: '', sort_order: 3, published: true },
+    { id: 'seed-promo-4', title: 'Cerveja IPA importada', description: 'Lata de 473 ml, bem lupulada.', price_from_cents: 2290, price_cents: 1790, unit: 'lata', starts_at: null, ends_at: inDays(5), image_path: null, image_alt: '', sort_order: 4, published: true },
+    { id: 'seed-promo-5', title: 'Gin London Dry', description: 'Garrafa de 750 ml, ótimo para tônica.', price_from_cents: 11990, price_cents: 9490, unit: 'garrafa', starts_at: null, ends_at: inDays(3), image_path: null, image_alt: '', sort_order: 5, published: true },
   ],
   highlights: [
-    { id: 'seed-hl-1', name: 'Pão de fermentação natural', description: 'Sai do forno às 7h e às 16h.', category: 'Padaria', price_cents: 2400, unit: 'un', image_path: null, image_alt: '', sort_order: 1, published: true },
-    { id: 'seed-hl-2', name: 'Mortadela trufada', description: 'Fatiada fininha, do jeito que pede o sanduíche.', category: 'Frios', price_cents: 1190, unit: '100 g', image_path: null, image_alt: '', sort_order: 2, published: true },
-    { id: 'seed-hl-3', name: 'Burrata fresca', description: 'Chega às quintas. Costuma acabar no sábado.', category: 'Queijos', price_cents: 3290, unit: 'un', image_path: null, image_alt: '', sort_order: 3, published: true },
-    { id: 'seed-hl-4', name: 'Espumante brut nacional', description: 'Serra Gaúcha, ótimo custo para brindar.', category: 'Vinhos', price_cents: 6900, unit: 'garrafa', image_path: null, image_alt: '', sort_order: 4, published: true },
-    { id: 'seed-hl-5', name: 'Geleia de pimenta da casa', description: 'Feita aqui, pote de 250 g.', category: 'Mercearia', price_cents: 2800, unit: 'pote', image_path: null, image_alt: '', sort_order: 5, published: true },
-    { id: 'seed-hl-6', name: 'Tábua de frios para dois', description: 'Montada na hora. Encomende pelo WhatsApp.', category: 'Encomendas', price_cents: 8900, unit: '', image_path: null, image_alt: '', sort_order: 6, published: true },
+    { id: 'seed-hl-1', name: 'Rosé chileno', description: 'Seco e fresco, para dias quentes.', category: 'Vinhos', price_cents: 6490, unit: 'garrafa', image_path: null, image_alt: '', sort_order: 1, published: true },
+    { id: 'seed-hl-2', name: 'Tinto português do Douro', description: 'Encorpado, vai bem com carnes.', category: 'Vinhos', price_cents: 8900, unit: 'garrafa', image_path: null, image_alt: '', sort_order: 2, published: true },
+    { id: 'seed-hl-3', name: 'Prosecco italiano', description: 'Extra dry, 750 ml.', category: 'Espumantes', price_cents: 7990, unit: 'garrafa', image_path: null, image_alt: '', sort_order: 3, published: true },
+    { id: 'seed-hl-4', name: 'Cerveja belga de trigo', description: 'Garrafa de 330 ml.', category: 'Cervejas', price_cents: 1990, unit: 'un', image_path: null, image_alt: '', sort_order: 4, published: true },
+    { id: 'seed-hl-5', name: 'Uísque escocês 12 anos', description: 'Blended, garrafa de 1 litro.', category: 'Destilados', price_cents: 18900, unit: 'garrafa', image_path: null, image_alt: '', sort_order: 5, published: true },
+    { id: 'seed-hl-6', name: 'Taça de cristal para tinto', description: 'Vendida avulsa ou em caixa com seis.', category: 'Acessórios', price_cents: 3900, unit: 'un', image_path: null, image_alt: '', sort_order: 6, published: true },
   ],
   news: [
-    {
-      id: 'seed-news-1',
-      title: 'Chegaram os vinhos da nova importação',
-      body: 'Rótulos do Douro e do Alentejo que ainda não tínhamos na loja. Passe para provar na degustação de sábado, a partir das 11h.',
-      published_at: inDays(-2),
-      image_path: null,
-      image_alt: '',
-      published: true,
-    },
-    {
-      id: 'seed-news-2',
-      title: 'Cestas de presente sob encomenda',
-      body: 'Monte a sua com queijos, vinhos, geleias e o que mais quiser. Peça pelo WhatsApp com dois dias de antecedência.',
-      published_at: inDays(-9),
-      image_path: null,
-      image_alt: '',
-      published: true,
-    },
-    {
-      id: 'seed-news-3',
-      title: 'Novo horário aos domingos',
-      body: 'Agora abrimos das 9h às 13h. Pão quentinho garantido para o café da manhã.',
-      published_at: inDays(-20),
-      image_path: null,
-      image_alt: '',
-      published: true,
-    },
+    { id: 'seed-news-1', title: 'Chegou nova leva de vinhos chilenos', body: 'Tintos, brancos e rosés que ainda não tínhamos na loja. Passe para conhecer.', published_at: inDays(-2), image_path: null, image_alt: '', published: true },
+    { id: 'seed-news-2', title: 'Kits de presente sob encomenda', body: 'Monte o seu com vinho, espumante, taças e caixa de madeira. Ligue para encomendar.', published_at: inDays(-9), image_path: null, image_alt: '', published: true },
   ],
 };
+
+/** Com o banco configurado, as listas começam vazias (nada de preço fictício). */
+export const emptyLists = { promotions: [], highlights: [], news: [] } as const;
