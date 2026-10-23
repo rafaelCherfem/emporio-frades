@@ -1,0 +1,44 @@
+---
+/**
+ * Faixa corrida de categorias, com ícones desenhados à mão (traço simples).
+ * Duas cópias lado a lado para o loop contínuo; decorativa (aria-hidden), pois as
+ * mesmas categorias aparecem no texto "Sobre". Velocidade e sentido seguem o scroll.
+ */
+type IconName = 'tinto' | 'garrafa' | 'espumante' | 'cerveja' | 'destilado' | 'presente';
+const items: { label: string; icon: IconName }[] = [
+  { label: 'Vinhos tintos', icon: 'tinto' },
+  { label: 'Brancos e rosés', icon: 'garrafa' },
+  { label: 'Espumantes', icon: 'espumante' },
+  { label: 'Cervejas especiais', icon: 'cerveja' },
+  { label: 'Destilados', icon: 'destilado' },
+  { label: 'Taças e presentes', icon: 'presente' },
+];
+const paths: Record<IconName, string[]> = {
+  tinto: ['M8 4h16c0 9-3 14-8 15c-5-1-8-6-8-15Z', 'M16 19v8M11 27h10', 'M9 9c4 2 10 2 14 0'],
+  garrafa: ['M14 2h4v6c3 2 4 5 4 8v13H10V16c0-3 1-6 4-8Z', 'M10 18h12'],
+  espumante: ['M12 3h8l-1 13c0 2-1.5 3-3 3s-3-1-3-3Z', 'M16 19v8M12 27h8', 'M14.5 8h3M15 12h2'],
+  cerveja: ['M7 8h14v17a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2Z', 'M21 12h3a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-3', 'M7 8c0-3 3-4 5-3c1-2 5-2 6 0c2-1 4 1 3 3'],
+  destilado: ['M8 10h16l-2 16H10Z', 'M9 16h14', 'M13 6l3 4l3-4'],
+  presente: ['M5 13h22v5H5Z', 'M7 18h18v9H7Z', 'M16 13v14', 'M16 13c-3-6-9-5-7-1c1 1 4 1 7 1c3 0 6 0 7-1c2-4-4-5-7 1'],
+};
+const copies = [0, 1];
+---
+
+<div class="marquee" aria-hidden="true" data-marquee>
+  <div class="marquee__track" data-marquee-track>
+    {
+      copies.map(() => (
+        <ul class="marquee__group">
+          {items.map((it) => (
+            <li class="marquee__item">
+              <svg class="marquee__icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                {paths[it.icon].map((d) => <path d={d} />)}
+              </svg>
+              <span>{it.label}</span>
+            </li>
+          ))}
+        </ul>
+      ))
+    }
+  </div>
+</div>

@@ -1,6 +1,8 @@
 ---
 import Icon from '../components/Icon.astro';
 import Logo from '../components/Logo.astro';
+import Marquee from '../components/Marquee.astro';
+import Seal from '../components/Seal.astro';
 import { demoContent, emptyLists, storeSettings } from '../data/seed';
 import Base from '../layouts/Base.astro';
 import { fetchContent } from '../lib/api';
@@ -157,6 +159,8 @@ const gores = Array.from({ length: 44 }, (_, i) => i);
       </div>
     </section>
 
+    <div class="storefront-wrap">
+    <Seal />
     <figure class="storefront" data-storefront>
       <div class="valance" aria-hidden="true" data-valance>
         {gores.map(() => <span class="valance__gore"><span></span></span>)}
@@ -172,6 +176,9 @@ const gores = Array.from({ length: 44 }, (_, i) => i);
         decoding="async"
       />
     </figure>
+    </div>
+
+    <Marquee />
 
     <section class="promos on-bottle" id="promocoes" aria-labelledby="promos-title" data-promos>
       <div class="wrap promos__head">
@@ -296,7 +303,7 @@ const gores = Array.from({ length: 44 }, (_, i) => i);
 
   <footer class="footer on-bottle">
     <div class="wrap">
-      <p class="footer__name" aria-hidden="true">Frade’s</p>
+      <p class="footer__name" aria-hidden="true" data-footer-name data-text="Frade’s">{[...'Frade’s'].map((c) => <span class="footer__char">{c}</span>)}</p>
       <div class="footer__grid">
         <div>
           <h2>Endereço</h2>

@@ -1,0 +1,31 @@
+---
+/**
+ * Selo redondo no estilo de rótulo/lacre: disco verde da placa, anel cobre e texto
+ * dourado em volta. Decorativo (aria-hidden). Gira com o scroll (motion.ts).
+ */
+const ring = 'EMPÓRIO FRADE’S ✦ VILA DA SAÚDE ✦ SÃO PAULO ✦ ';
+---
+
+<div class="seal" aria-hidden="true" data-seal>
+  <svg class="seal__svg" viewBox="0 0 200 200" data-seal-spin>
+    <defs>
+      <path id="seal-ring" d="M100 100 m-74 0 a74 74 0 1 1 148 0 a74 74 0 1 1 -148 0" />
+    </defs>
+    <circle cx="100" cy="100" r="98" class="seal__disc" />
+    <circle cx="100" cy="100" r="93" class="seal__rim" />
+    <circle cx="100" cy="100" r="56" class="seal__rim seal__rim--inner" />
+    <text class="seal__text">
+      <textPath href="#seal-ring" textLength="462" lengthAdjust="spacing">{ring}</textPath>
+    </text>
+  </svg>
+  <!-- Centro fixo (não gira): taça e garrafa -->
+  <svg class="seal__center" viewBox="0 0 200 200">
+    <g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M78 76 h26 c0 18 -4 30 -13 32 c-9 -2 -13 -14 -13 -32 Z" />
+      <path d="M91 108 v20 M82 128 h18" />
+      <path d="M80 88 c6 3 18 3 24 0" opacity="0.6" />
+      <path d="M118 70 v10 c-5 4 -7 9 -7 15 v33 h16 v-33 c0 -6 -2 -11 -7 -15 v-10 Z" />
+      <path d="M116 66 h6" />
+    </g>
+  </svg>
+</div>
