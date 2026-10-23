@@ -1,3 +1,250 @@
 ---
+import Icon from '../components/Icon.astro';
+import { seed } from '../data/seed';
+import Base from '../layouts/Base.astro';
+import { readConfig } from '../lib/config';
+import {
+  addressLines,
+  contactLinks,
+  fullAddress,
+  highlightMenu,
+  hoursList,
+  newsBoard,
+  promotionList,
+  socialList,
+} from '../lib/views';
+import { toHTML } from '../lib/vnode';
+
+const cfg = readConfig();
+const s = seed.settings;
+const env = { supabaseUrl: cfg.supabaseUrl };
+const links = contactLinks(s);
+const [addr1, addr2] = addressLines(s);
+
+const promos = promotionList(seed.promotions, env);
+const year = new Date().getFullYear();
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'GroceryStore',
+  name: s.name,
+  description: s.tagline,
+  url: Astro.site?.toString(),
+  telephone: s.phone ? `+55${s.phone}` : undefined,
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: [s.street, s.number].filter(Boolean).join(', '),
+    addressLocality: s.city,
+    addressRegion: s.state,
+    postalCode: s.zip || undefined,
+    addressCountry: 'BR',
+  },
+  geo: s.latitude != null ? { '@type': 'GeoCoordinates', latitude: s.latitude, longitude: s.longitude } : undefined,
+  openingHoursSpecification: s.hours
+    .filter((h) => !h.closed)
+    .map((h) => ({
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][h.day],
+      opens: h.open,
+      closes: h.close,
+    })),
+  sameAs: [links.instagram, links.facebook, links.tiktok].filter(Boolean),
+};
 ---
-<html lang="pt-BR"><body><h1>ok</h1><script>console.log(1)</script></body></html>
+
+<Base
+  title={`${s.name} | Comidas e bebidas`}
+  description={`${s.tagline} ${fullAddress(s)}.`}
+  jsonLd={jsonLd}
+>
+  <noscript><link rel="stylesheet" href="/noscript.css" /></noscript>
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+
+  {!cfg.enabled && <p class="demo-banner" role="note">Modo demonstração: conteúdo de exemplo. Configure o Supabase para editar pelo painel.</p>}
+
+  <header class="header" data-header>
+    <div class="wrap header__inner">
+      <a class="wordmark" href="#topo" data-bind="name">{s.name}</a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="menu" data-nav-toggle>
+        <span></span><span></span><span></span>
+        <span class="sr-only">Menu</span>
+      </button>
+      <nav class="nav" id="menu" aria-label="Principal" data-nav>
+        <ul class="nav__list">
+          <li><a href="#promocoes">Promoções</a></li>
+          <li><a href="#em-alta">Em alta</a></li>
+          <li><a href="#novidades">Novidades</a></li>
+          <li><a href="#onde-estamos">Onde estamos</a></li>
+        </ul>
+      </nav>
+      <a class="btn btn--label" href={links.whatsapp} data-link="whatsapp" hidden={!links.whatsapp}>
+        <Icon name="whatsapp" />
+        WhatsApp
+      </a>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <section class="hero wrap" id="topo" aria-labelledby="hero-title">
+      <h1 class="hero__name" id="hero-title" data-hero-name>
+        <span class="hero__line"><span>Empório</span></span>
+        <span class="hero__line hero__line--right"><span>Frades</span></span>
+      </h1>
+
+      <div class="hero__base" data-hero-base>
+        <p class="hero__tagline" data-bind="tagline">{s.tagline}</p>
+        <div class="hero__aside">
+          <p class="status" data-status hidden></p>
+          <p class="hero__address">
+            <span data-bind="address1">{addr1}</span>
+            {addr2 && <span>, </span>}
+            <span data-bind="address2">{addr2}</span>
+          </p>
+          <div class="hero__actions">
+            <a class="btn btn--label" href="#promocoes">Ver promoções</a>
+            <a class="btn btn--ghost" href={links.whatsapp} data-link="whatsapp" hidden={!links.whatsapp}>
+              <Icon name="whatsapp" />
+              Chamar no WhatsApp
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="promos awning on-bottle" id="promocoes" aria-labelledby="promos-title" data-promos>
+      <div class="wrap promos__head">
+        <div>
+          <h2 class="section-title" id="promos-title">Promoções da semana</h2>
+          <p class="section-lead">Preços válidos na loja enquanto durar o estoque. Para reservar, é só chamar no WhatsApp.</p>
+        </div>
+        <p class="promos__count" data-promo-count aria-live="polite">
+          {promos.length === 1 ? '1 oferta' : `${promos.length} ofertas`}
+        </p>
+      </div>
+
+      <div class="rail" data-rail>
+        <ul class="rail__track" data-list="promotions" aria-label="Ofertas" set:html={toHTML(promos)} />
+      </div>
+
+      <p class="wrap promos__empty" data-promo-empty hidden={promos.length > 0}>
+        Nenhuma promoção publicada agora. As ofertas do dia saem primeiro no
+        <a href={links.whatsapp ?? '#onde-estamos'} data-link="whatsapp">nosso WhatsApp</a>.
+      </p>
+    </section>
+
+    <section class="hot" id="em-alta" aria-labelledby="hot-title">
+      <div class="wrap hot__grid">
+        <div class="hot__intro">
+          <h2 class="section-title" id="hot-title">O que mais sai no balcão</h2>
+          <p class="section-lead">Os preferidos da clientela nesta semana. Preço por unidade ou por peso, como está na etiqueta da loja.</p>
+        </div>
+        <ul class="menu" data-list="highlights" set:html={toHTML(highlightMenu(seed.highlights, env))} />
+      </div>
+    </section>
+
+    <section class="about" aria-label="Sobre a loja">
+      <div class="wrap">
+        <p class="about__text" data-bind="about">{s.about}</p>
+      </div>
+    </section>
+
+    <section class="news" id="novidades" aria-labelledby="news-title">
+      <div class="wrap">
+        <h2 class="section-title" id="news-title">Novidades</h2>
+        <ol class="board" data-list="news" set:html={toHTML(newsBoard(seed.news, env))} />
+        <p class="board__empty" data-news-empty hidden={seed.news.length > 0}>Sem novidades publicadas por enquanto.</p>
+      </div>
+    </section>
+
+    <section class="visit" id="onde-estamos" aria-labelledby="visit-title">
+      <div class="wrap">
+        <h2 class="section-title" id="visit-title">Onde estamos</h2>
+
+        <div class="visit__grid">
+          <div>
+            <address class="visit__address">
+              <span data-bind="address1">{addr1}</span><br />
+              <span data-bind="address2">{addr2}</span>
+            </address>
+            <p class="visit__ref" data-bind="reference" hidden={!s.reference}>{s.reference}</p>
+
+            <div class="visit__actions">
+              <a class="btn btn--label" href={links.maps} data-link="maps">
+                <Icon name="route" />
+                Como chegar
+              </a>
+              <a class="btn btn--ghost" href={links.waze} data-link="waze">Abrir no Waze</a>
+            </div>
+
+            <div class="hours">
+              <h3 class="hours__title">Horário de funcionamento</h3>
+              <ul data-list="hours" set:html={toHTML(hoursList(s, {...env}))} />
+            </div>
+
+            <div class="contacts">
+              <a href={links.phone} data-link="phone" hidden={!links.phone}>
+                Telefone <span data-label="phone">{links.phoneLabel}</span>
+              </a>
+              <a href={links.whatsapp} data-link="whatsapp" hidden={!links.whatsapp}>
+                WhatsApp <span data-label="whatsapp">{links.whatsappLabel}</span>
+              </a>
+              <a href={links.email} data-link="email" hidden={!links.email}>
+                <span data-label="email">{links.emailLabel}</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="map on-bottle" data-map>
+            <div class="map__grid" aria-hidden="true"></div>
+            <svg class="map__roads" viewBox="0 0 600 420" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+              <path d="M-20 300 C 140 260, 260 240, 620 150" stroke="currentColor" stroke-width="26" fill="none" />
+              <path d="M180 -20 L 330 440" stroke="currentColor" stroke-width="16" fill="none" />
+              <path d="M-20 90 L 620 120" stroke="currentColor" stroke-width="10" fill="none" />
+              <path d="M460 -20 C 430 140, 470 300, 420 440" stroke="currentColor" stroke-width="10" fill="none" />
+            </svg>
+            <Icon name="pin" class="map__pin" />
+            <div class="map__cta">
+              <p class="map__note">O mapa do Google só é carregado quando você pede.</p>
+              <button class="btn btn--label map__load" type="button" data-map-load>Mostrar mapa</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer awning on-bottle">
+    <div class="wrap">
+      <p class="footer__name" aria-hidden="true">Frades</p>
+      <div class="footer__grid">
+        <div>
+          <h2>Endereço</h2>
+          <p><span data-bind="address1">{addr1}</span><br /><span data-bind="address2">{addr2}</span></p>
+        </div>
+        <div>
+          <h2>Contato</h2>
+          <ul>
+            <li><a href={links.whatsapp} data-link="whatsapp" hidden={!links.whatsapp}>WhatsApp</a></li>
+            <li><a href={links.phone} data-link="phone" hidden={!links.phone}>Ligar para a loja</a></li>
+            <li><a href={links.email} data-link="email" hidden={!links.email}>E-mail</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2>Redes sociais</h2>
+          <ul data-list="social" set:html={toHTML(socialList(s))} />
+        </div>
+      </div>
+      <p class="footer__legal">© {year} <span data-bind="name">{s.name}</span>. Preços e ofertas sujeitos a alteração sem aviso e válidos somente na loja física.</p>
+    </div>
+  </footer>
+
+  <a class="btn btn--label float-wa" href={links.whatsapp} data-link="whatsapp" data-float-wa data-visible="false" hidden={!links.whatsapp}>
+    <Icon name="whatsapp" />
+    <span>WhatsApp</span>
+  </a>
+
+  <script>
+    import { initSite } from '../scripts/site';
+    initSite();
+  </script>
+</Base>

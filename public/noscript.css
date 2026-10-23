@@ -1,0 +1,9 @@
+/* Carregado só dentro de <noscript>: sem JavaScript, o menu fica sempre visível
+   e o botão de abrir/fechar some. */
+@media (max-width: 860px) {
+  .nav:not([data-open='true']) { display: block; position: static; padding: 0 0 1rem; border: 0; }
+  .header__inner { flex-wrap: wrap; }
+  .nav { width: 100%; }
+  .nav-toggle { display: none !important; }
+}
+.status, .map__load { display: none; }
