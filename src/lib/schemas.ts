@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+// Sem geração de código em tempo de execução (new Function): a CSP com Trusted Types
+// proíbe isso, e o modo "jitless" do Zod 4 valida do mesmo jeito sem precisar.
+z.config({ jitless: true });
+
 /**
  * Contratos do conteúdo. Os mesmos limites existem como CHECK no banco
  * (supabase/migrations). Linhas que não batem com o schema são descartadas
@@ -112,11 +116,14 @@ export interface SiteContent {
   news: News[];
 }
 
+/** Teto de itens por lista: nunca validar volumes absurdos vindos da rede. */
+export const MAX_ROWS = 200;
+
 /** Valida uma lista e descarta itens inválidos sem derrubar o resto. */
 export function parseList<T>(schema: z.ZodType<T>, rows: unknown): T[] {
   if (!Array.isArray(rows)) return [];
   const out: T[] = [];
-  for (const row of rows) {
+  for (const row of rows.slice(0, MAX_ROWS)) {
     const r = schema.safeParse(row);
     if (r.success) out.push(r.data);
   }

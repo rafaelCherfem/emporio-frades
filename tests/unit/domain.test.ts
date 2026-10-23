@@ -111,6 +111,12 @@ describe('schemas', () => {
     expect(parseList(promotionSchema, 'não é lista')).toEqual([]);
   });
 
+  it('limita a quantidade de itens validados', async () => {
+    const { MAX_ROWS } = await import('../../src/lib/schemas');
+    const many = Array.from({ length: 5000 }, (_, i) => ({ ...seed.promotions[0], id: `seed-x-${i}` }));
+    expect(parseList(promotionSchema, many)).toHaveLength(MAX_ROWS);
+  });
+
   it('promoção com preço "por" maior que "de" é recusada', () => {
     const r = promotionSchema.safeParse({ ...seed.promotions[0], price_cents: 99999 });
     expect(r.success).toBe(false);

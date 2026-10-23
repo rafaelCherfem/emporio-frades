@@ -44,6 +44,7 @@ O site público é estático e só lê dados já filtrados pelo banco. Toda escr
 
 | Achado | Severidade | Correção |
 | --- | --- | --- |
+| Zod 3 com alerta novo (GHSA-mrhx-c7xc-m3w5): validação de listas enormes pode esgotar memória | Alta | atualizado para Zod 4.6.7, listas limitadas a 200 itens antes de validar e modo `jitless` (sem `new Function`, compatível com a CSP/Trusted Types); teste de regressão em `domain.test.ts` |
 | Astro 5 trazia `sharp`/`esbuild` com CVEs (1 crítica, 1 alta) | Alta | atualizado para Astro 7 (0 vulnerabilidades) |
 | Links de WhatsApp/Maps/Waze no HTML do build sem `rel="noopener noreferrer"` | Baixa | atributos adicionados; teste de regressão em `static.test.ts` |
 | Helper do teste de RLS considerava qualquer `SELECT` como "negado" | Média (teste podia passar no vazio) | helper corrigido e controle positivo adicionado |
