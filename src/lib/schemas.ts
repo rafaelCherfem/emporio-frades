@@ -13,7 +13,7 @@ z.config({ jitless: true });
 const text = (max: number) => z.string().trim().max(max);
 const requiredText = (max: number) => text(max).min(1, 'Campo obrigatório');
 const cents = z.number().int().min(0).max(100_000_00);
-const isoDate = z.string().datetime({ offset: true }).nullable();
+const isoDate = z.iso.datetime({ offset: true }).nullable();
 const imagePath = z.string().max(200).nullable();
 
 const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use o formato 08:30');
@@ -48,7 +48,7 @@ export const storeSettingsSchema = z.object({
   phone: z.string().trim().regex(/^\d{10,13}$|^$/, 'Só números, com DDD'),
   whatsapp: z.string().trim().regex(/^\d{10,13}$|^$/, 'Só números, com DDD'),
   whatsapp_message: text(300),
-  email: z.string().trim().email('E-mail inválido').max(254).or(z.literal('')),
+  email: z.email('E-mail inválido').max(254).or(z.literal('')),
   instagram: text(120),
   facebook: text(120),
   tiktok: text(120),
@@ -58,7 +58,7 @@ export const storeSettingsSchema = z.object({
 
 export const promotionSchema = z
   .object({
-    id: z.string().uuid().or(z.string().regex(/^seed-[a-z0-9-]+$/)),
+    id: z.uuid().or(z.string().regex(/^seed-[a-z0-9-]+$/)),
     title: requiredText(90),
     description: text(280),
     price_from_cents: cents.nullable(),
@@ -81,7 +81,7 @@ export const promotionSchema = z
   });
 
 export const highlightSchema = z.object({
-  id: z.string().uuid().or(z.string().regex(/^seed-[a-z0-9-]+$/)),
+  id: z.uuid().or(z.string().regex(/^seed-[a-z0-9-]+$/)),
   name: requiredText(90),
   description: text(200),
   category: text(40),
@@ -94,10 +94,10 @@ export const highlightSchema = z.object({
 });
 
 export const newsSchema = z.object({
-  id: z.string().uuid().or(z.string().regex(/^seed-[a-z0-9-]+$/)),
+  id: z.uuid().or(z.string().regex(/^seed-[a-z0-9-]+$/)),
   title: requiredText(120),
   body: text(1500),
-  published_at: z.string().datetime({ offset: true }),
+  published_at: z.iso.datetime({ offset: true }),
   image_path: imagePath,
   image_alt: text(160),
   published: z.boolean(),
