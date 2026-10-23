@@ -110,14 +110,15 @@ a:hover {
   margin-inline: auto;
 }
 
-/* Títulos de seção: grotesca condensada, caixa normal */
+/* Títulos de seção: serifada de rótulo, peso firme, um toque de "maciez" */
 .section-title {
-  font-family: var(--font-display);
-  font-stretch: 78%;
-  font-weight: 760;
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-weight: 620;
+  font-variation-settings: 'SOFT' 40, 'WONK' 0;
   font-size: var(--step-4);
-  line-height: 0.95;
-  letter-spacing: -0.015em;
+  line-height: 1;
+  letter-spacing: -0.028em;
   text-wrap: balance;
 }
 
@@ -343,62 +344,110 @@ a:hover {
   }
 }
 
-/* ---------- Hero ---------- */
+/* ---------- Hero: letreiro em relevo ---------- */
 
 .hero {
   position: relative;
   padding-block: clamp(2rem, 1rem + 4vw, 4.5rem) clamp(3rem, 2rem + 5vw, 6rem);
 }
 
-@property --wdth {
-  syntax: '<percentage>';
+/* Profundidade do relevo: registrada para poder animar (abertura em CSS, scroll no GSAP) */
+@property --d {
+  syntax: '<number>';
   inherits: true;
-  initial-value: 112%;
+  initial-value: 7;
 }
 
 .hero__name {
-  --wdth: 112%;
-  font-family: var(--font-display);
-  font-weight: 820;
-  font-stretch: var(--wdth);
-  font-size: clamp(4.2rem, 17.4vw, 17.5rem);
-  line-height: 0.87;
+  --d: 7;
+  --soft: 40;
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-weight: 660;
+  font-variation-settings: 'SOFT' var(--soft), 'WONK' 0;
+  font-size: clamp(3.8rem, 15.2vw, 15.5rem);
+  line-height: 0.92;
   letter-spacing: -0.035em;
   color: var(--brand);
+  perspective: 1200px;
+  perspective-origin: 50% 0%;
 }
 
-/* Abertura em CSS: roda antes do JavaScript, sem piscar.
-   fill-mode backwards: depois de terminar, o GSAP assume o --wdth no scroll. */
+.hero__line {
+  display: block;
+  transform-origin: 50% 100%;
+  white-space: nowrap;
+}
+
+.hero__line--right {
+  text-align: right;
+}
+
+/* Cada letra tem a extrusão em verde mais fundo (luz vindo de cima, à esquerda)
+   e uma sombra suave no "papel". --d controla a profundidade. */
+.hero__char {
+  display: inline-block;
+  /* unidade proporcional ao tamanho da letra: o relevo fica igual em qualquer tela */
+  --u: calc(var(--d) * 0.0042em);
+  text-shadow:
+    calc(var(--u) * 0.14) calc(var(--u) * 0.14) 0 #1b5427,
+    calc(var(--u) * 0.28) calc(var(--u) * 0.28) 0 #194d24,
+    calc(var(--u) * 0.43) calc(var(--u) * 0.43) 0 #164621,
+    calc(var(--u) * 0.57) calc(var(--u) * 0.57) 0 #143f1e,
+    calc(var(--u) * 0.71) calc(var(--u) * 0.71) 0 #11381a,
+    calc(var(--u) * 0.86) calc(var(--u) * 0.86) 0 #0f3117,
+    var(--u) var(--u) 0 #0c2a13,
+    calc(var(--u) * 1.6) calc(var(--u) * 2.6) calc(var(--u) * 2.2) rgb(12 42 19 / 0.2),
+    calc(var(--u) * 3) calc(var(--u) * 5) calc(var(--u) * 6) rgb(12 42 19 / 0.1);
+}
+
+/* Abertura em CSS (roda antes do JS, sem piscar): as letras sobem girando,
+   uma a uma, e o relevo "cresce" no final. */
 @media (prefers-reduced-motion: no-preference) {
   .hero__name {
-    animation: hero-widen 1.6s cubic-bezier(0.65, 0, 0.35, 1) 0.15s backwards;
+    animation: hero-depth 1.3s cubic-bezier(0.22, 1, 0.36, 1) 0.75s backwards;
   }
 
-  .hero__line > span {
-    animation: hero-rise 1.1s var(--ease-out) backwards;
+  .hero__char {
+    animation: hero-char 1s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation-delay: 0.1s;
   }
 
-  .hero__line + .hero__line > span {
-    animation-delay: 0.12s;
-  }
+  .hero__char:nth-child(2) { animation-delay: 0.15s; }
+  .hero__char:nth-child(3) { animation-delay: 0.2s; }
+  .hero__char:nth-child(4) { animation-delay: 0.25s; }
+  .hero__char:nth-child(5) { animation-delay: 0.3s; }
+  .hero__char:nth-child(6) { animation-delay: 0.35s; }
+  .hero__char:nth-child(7) { animation-delay: 0.4s; }
+  .hero__char:nth-child(8) { animation-delay: 0.45s; }
+  .hero__line + .hero__line .hero__char { animation-delay: 0.32s; }
+  .hero__line + .hero__line .hero__char:nth-child(2) { animation-delay: 0.37s; }
+  .hero__line + .hero__line .hero__char:nth-child(3) { animation-delay: 0.42s; }
+  .hero__line + .hero__line .hero__char:nth-child(4) { animation-delay: 0.47s; }
+  .hero__line + .hero__line .hero__char:nth-child(5) { animation-delay: 0.52s; }
+  .hero__line + .hero__line .hero__char:nth-child(6) { animation-delay: 0.57s; }
+  .hero__line + .hero__line .hero__char:nth-child(7) { animation-delay: 0.62s; }
+  .hero__line + .hero__line .hero__char:nth-child(8) { animation-delay: 0.67s; }
 
   .hero__base {
-    animation: hero-fade 0.9s var(--ease-out) 0.9s backwards;
+    animation: hero-fade 0.9s var(--ease-out) 1s backwards;
   }
 }
 
-@keyframes hero-widen {
+@keyframes hero-char {
   from {
-    --wdth: 62%;
+    opacity: 0;
+    transform: translateY(0.42em) rotateX(-75deg);
+    filter: blur(8px);
   }
-  to {
-    --wdth: 112%;
+  60% {
+    filter: blur(0);
   }
 }
 
-@keyframes hero-rise {
+@keyframes hero-depth {
   from {
-    transform: translateY(105%);
+    --d: 0;
   }
 }
 
@@ -407,21 +456,6 @@ a:hover {
     opacity: 0;
     transform: translateY(16px);
   }
-}
-
-.hero__line {
-  display: block;
-  overflow: clip;
-  overflow-clip-margin: 0.08em;
-  padding-bottom: 0.04em;
-}
-
-.hero__line > span {
-  display: inline-block;
-}
-
-.hero__line--right {
-  text-align: right;
 }
 
 .hero__base {
@@ -435,9 +469,14 @@ a:hover {
 }
 
 .hero__tagline {
-  font-size: var(--step-2);
-  line-height: 1.25;
-  max-width: 26ch;
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-style: italic;
+  font-weight: 360;
+  font-size: var(--step-3);
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  max-width: 19ch;
   text-wrap: balance;
 }
 
@@ -488,9 +527,10 @@ a:hover {
   }
 }
 
-/* ---------- Foto do salão ---------- */
+/* ---------- Foto do salão, com o toldo pendurado em cima ---------- */
 
 .storefront {
+  position: relative;
   height: clamp(15rem, 38vw, 34rem);
   overflow: hidden;
   background: var(--paper-2);
@@ -503,22 +543,20 @@ a:hover {
   object-position: 50% 45%;
 }
 
-/* ---------- Toldo (borda recortada das seções verdes) ---------- */
-
-.awning {
-  --scallop: 22px;
-  position: relative;
-}
-
-.awning::before {
-  content: '';
+/* Toldo: arte vetorial (src/assets/awning.svg) repetida em gomos inteiros.
+   A sombra projetada cai sobre a foto; o GSAP balança de leve no scroll. */
+.valance {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(var(--scallop) * -1 + 1px);
-  height: var(--scallop);
-  background: radial-gradient(circle at 50% 0, transparent calc(var(--scallop) - 0.5px), var(--bottle) var(--scallop))
-    0 0 / calc(var(--scallop) * 2) var(--scallop) repeat-x;
+  inset: 0 -2% auto;
+  height: clamp(48px, 2.4rem + 1.8vw, 76px);
+  /* Camadas: gomos (SVG repetido) / costura dourada / barra superior contínua */
+  background:
+    url('../assets/awning.svg') 0 0 / auto 100% round no-repeat,
+    repeating-linear-gradient(90deg, rgb(237 197 110 / 0.75) 0 4px, transparent 4px 8px) 0 17.5% / 100% 1px no-repeat,
+    linear-gradient(#2b7442, #22652f 55%, #1c562a) 0 0 / 100% 35.5% no-repeat;
+  filter: drop-shadow(0 9px 7px rgb(6 24 11 / 0.42)) drop-shadow(0 2px 1px rgb(6 24 11 / 0.3));
+  transform-origin: 50% 0;
+  z-index: 1;
   pointer-events: none;
 }
 
@@ -543,14 +581,38 @@ a:hover {
 }
 
 .promos__count {
-  font-family: var(--font-display);
-  font-stretch: 78%;
-  font-weight: 600;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--step-1);
   color: var(--on-bottle-2);
 }
 
 .rail {
-  margin-top: clamp(2.5rem, 2rem + 2vw, 4rem);
+  margin-top: clamp(2rem, 1.5rem + 2vw, 3.5rem);
+}
+
+/* Barra de progresso do varal: só aparece quando a seção está fixada */
+.rail__progress {
+  display: none;
+  width: min(100% - 2 * var(--gutter), var(--wrap));
+  height: 3px;
+  margin: 0.25rem auto 0;
+  border-radius: 3px;
+  background: rgb(232 235 226 / 0.16);
+  overflow: hidden;
+}
+
+.rail__progress span {
+  display: block;
+  height: 100%;
+  background: var(--label);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+
+.rail[data-pinned='true'] .rail__progress {
+  display: block;
 }
 
 .rail__track {
@@ -593,7 +655,7 @@ a:hover {
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 21rem;
+  min-height: min(21rem, 50vh);
   padding: 1.6rem 1.4rem 1.3rem;
   background: var(--label);
   color: var(--ink);
@@ -814,9 +876,10 @@ a:hover {
 }
 
 .menu__name {
-  font-family: var(--font-display);
-  font-stretch: 88%;
-  font-weight: 700;
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-weight: 560;
+  letter-spacing: -0.01em;
   font-size: var(--step-1);
   line-height: 1.15;
 }
@@ -901,14 +964,25 @@ a:hover {
 }
 
 .about__text {
-  max-width: 30ch;
-  font-family: var(--font-display);
-  font-stretch: 96%;
-  font-weight: 560;
-  font-size: var(--step-3);
-  line-height: 1.12;
-  letter-spacing: -0.01em;
+  max-width: 34ch;
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-weight: 380;
+  font-variation-settings: 'SOFT' 50, 'WONK' 0;
+  font-size: clamp(1.45rem, 1.2rem + 1.1vw, 2.15rem);
+  line-height: 1.32;
+  letter-spacing: -0.012em;
   text-wrap: pretty;
+}
+
+/* Capitular em verde da placa, como abertura de rótulo */
+.about__text::first-letter {
+  float: left;
+  margin: 0.06em 0.12em 0 0;
+  font-weight: 640;
+  font-size: 3.35em;
+  line-height: 0.82;
+  color: var(--brand);
 }
 
 /* ---------- Novidades (mural) ---------- */
@@ -944,9 +1018,10 @@ a:hover {
 
 .board__title {
   grid-area: title;
-  font-family: var(--font-display);
-  font-stretch: 86%;
-  font-weight: 740;
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-weight: 580;
+  letter-spacing: -0.015em;
   font-size: var(--step-2);
   line-height: 1.08;
   text-wrap: balance;
@@ -997,9 +1072,10 @@ a:hover {
 }
 
 .visit__address {
-  font-family: var(--font-display);
-  font-stretch: 90%;
-  font-weight: 650;
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-weight: 520;
+  letter-spacing: -0.01em;
   font-size: var(--step-2);
   line-height: 1.2;
   font-style: normal;
@@ -1142,15 +1218,19 @@ a:hover {
   background: var(--bottle);
   color: var(--on-bottle);
   padding-block: clamp(4rem, 3rem + 4vw, 6.5rem) 2rem;
-  margin-top: 22px;
+  /* filete cobre logo abaixo da borda, como o quadro da placa */
+  box-shadow:
+    inset 0 10px 0 var(--bottle),
+    inset 0 12px 0 var(--copper);
 }
 
 .footer__name {
-  font-family: var(--font-display);
-  font-weight: 820;
-  font-stretch: 112%;
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-weight: 640;
+  font-variation-settings: 'SOFT' 40, 'WONK' 0;
   font-size: clamp(3rem, 11vw, 10rem);
-  line-height: 0.85;
+  line-height: 0.9;
   letter-spacing: -0.035em;
   color: var(--gold);
 }

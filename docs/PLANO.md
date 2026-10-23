@@ -101,8 +101,14 @@ Princípio: o site parece uma loja real, não um template. O fio condutor é a *
 | Tinta | `#17201B` | texto |
 
 **Tipografia** (hospedada localmente, sem CDN)
-- Títulos: Archivo variável com eixo de largura. A palavra da marca anima de condensada para expandida conforme o scroll.
-- Texto: Instrument Sans, legível e neutra.
+- Serifada: **Fraunces** variável (tamanho óptico, peso e eixo SOFT). Nome da loja, títulos de seção, frase de apresentação (itálico), texto "Sobre" com capitular, nomes de produtos e endereço. Dá o tom de rótulo de vinho.
+- Grotesca condensada: **Archivo** (eixo de largura). Só na voz de gôndola: etiquetas de preço, selos de desconto e a logo no estilo da placa.
+- Texto: **Instrument Sans**, legível e neutra, para parágrafos e botões.
+
+**Movimento**
+- Letreiro: letras entram uma a uma (CSS, sem piscar); relevo em verde mais fundo proporcional ao tamanho da letra; no scroll a placa tomba em perspectiva e o relevo cresce.
+- Varal de promoções: só trava quando as etiquetas estão inteiras na tela (pé do varal no rodapé da tela), com barra de progresso; em telas baixas (< 600 px) ou celular, vira rolagem lateral comum.
+- Toldo: gomos com volume, filete cobre e costura dourada, pendurado na foto do salão; balança de leve com a velocidade do scroll.
 
 **Layout**
 - Cabeçalho: logo no estilo da placa (quadro verde, filete cobre, letras douradas) e botão de contato (WhatsApp se houver, senão "Ligar").

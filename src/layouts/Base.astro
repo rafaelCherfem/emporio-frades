@@ -1,6 +1,6 @@
 ---
 import '../styles/site.css';
-import archivoUrl from '../assets/fonts/archivo-latin-wdth-normal.woff2?url';
+import frauncesUrl from '../assets/fonts/fraunces-latin-full-normal.woff2?url';
 import { asset } from '../lib/paths';
 import { buildCsp } from '../../scripts/security-headers.mjs';
 
@@ -57,7 +57,7 @@ const ld = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : null;
 
     <link
       rel="preload"
-      href={archivoUrl}
+      href={frauncesUrl}
       as="font"
       type="font/woff2"
       crossorigin

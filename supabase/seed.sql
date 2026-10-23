@@ -3,8 +3,8 @@
 
 update public.store_settings set
   name = 'Empório Frade’s',
-  tagline = 'Vinhos, espumantes, cervejas especiais e destilados na Avenida do Cursino, com a prateleira cheia e gente que entende do assunto.',
-  about = 'Um empório de bairro na Vila da Saúde, com rótulos do mundo inteiro: tintos, brancos e rosés, espumantes para brindar, cervejas especiais, destilados, taças e acessórios. Passe para conhecer ou ligue para saber se temos o que você procura.',
+  tagline = 'Rótulos do mundo inteiro e atendimento de quem conhece cada garrafa.',
+  about = 'Na Avenida do Cursino, em plena Vila da Saúde, o Frade’s reúne centenas de rótulos num só lugar: tintos, brancos, rosés e espumantes de vários países, cervejas especiais, destilados, taças e acessórios. Procurando o vinho do jantar, um presente ou aquele gin difícil de achar? Passe na loja ou ligue. A gente ajuda a escolher.',
   street = 'Av. do Cursino',
   number = '129',
   district = 'Vila da Saúde',

@@ -74,6 +74,10 @@ const jsonLd = {
 };
 
 const ext = { target: '_blank', rel: 'noopener noreferrer' };
+
+// Letreiro: cada letra vira um elemento para a abertura e o relevo.
+// Leitores de tela leem o texto inteiro (sr-only); as letras ficam ocultas para eles.
+const signLines = ['Empório', 'Frade’s'].map((w) => [...w]);
 ---
 
 <Base
@@ -115,8 +119,12 @@ const ext = { target: '_blank', rel: 'noopener noreferrer' };
   <main id="conteudo">
     <section class="hero wrap" id="topo" aria-labelledby="hero-title">
       <h1 class="hero__name" id="hero-title" data-hero-name>
-        <span class="hero__line"><span>Empório</span></span>
-        <span class="hero__line hero__line--right"><span>Frade’s</span></span>
+        <span class="sr-only">Empório Frade’s</span>
+        {signLines.map((chars, i) => (
+          <span class:list={['hero__line', i === 1 && 'hero__line--right']} aria-hidden="true" data-hero-line>
+            {chars.map((c) => <span class="hero__char">{c}</span>)}
+          </span>
+        ))}
       </h1>
 
       <div class="hero__base" data-hero-base>
@@ -143,7 +151,8 @@ const ext = { target: '_blank', rel: 'noopener noreferrer' };
       </div>
     </section>
 
-    <figure class="storefront">
+    <figure class="storefront" data-storefront>
+      <div class="valance" aria-hidden="true" data-valance></div>
       <img
         src={asset('media/salao-1360.webp')}
         srcset={`${asset('media/salao-800.webp')} 800w, ${asset('media/salao-1360.webp')} 1360w`}
@@ -156,7 +165,7 @@ const ext = { target: '_blank', rel: 'noopener noreferrer' };
       />
     </figure>
 
-    <section class="promos awning on-bottle" id="promocoes" aria-labelledby="promos-title" data-promos>
+    <section class="promos on-bottle" id="promocoes" aria-labelledby="promos-title" data-promos>
       <div class="wrap promos__head">
         <div>
           <h2 class="section-title" id="promos-title">Promoções da semana</h2>
@@ -169,6 +178,7 @@ const ext = { target: '_blank', rel: 'noopener noreferrer' };
 
       <div class="rail" data-rail hidden={promos.length === 0}>
         <ul class="rail__track" data-list="promotions" aria-label="Ofertas" set:html={toHTML(promos)} />
+        <div class="rail__progress" aria-hidden="true"><span data-rail-progress></span></div>
       </div>
 
       <p class="wrap promos__empty" data-promo-empty hidden={promos.length > 0}>
@@ -276,7 +286,7 @@ const ext = { target: '_blank', rel: 'noopener noreferrer' };
     </section>
   </main>
 
-  <footer class="footer awning on-bottle">
+  <footer class="footer on-bottle">
     <div class="wrap">
       <p class="footer__name" aria-hidden="true">Frade’s</p>
       <div class="footer__grid">
