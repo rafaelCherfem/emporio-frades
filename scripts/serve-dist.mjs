@@ -6,7 +6,7 @@ import { createServer } from 'node:http';
 import { extname, join, normalize, resolve } from 'node:path';
 import { headersFor } from './security-headers.mjs';
 
-const root = resolve('dist');
+const root = resolve(process.env['DIST'] ?? 'dist');
 const port = Number(process.argv[2] ?? process.env['PORT'] ?? 4322);
 const supabaseUrl = process.env['PUBLIC_SUPABASE_URL'];
 

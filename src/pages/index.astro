@@ -77,7 +77,7 @@ const jsonLd = {
           <li><a href="#onde-estamos">Onde estamos</a></li>
         </ul>
       </nav>
-      <a class="btn btn--label" href={links.whatsapp} data-link="whatsapp" hidden={!links.whatsapp}>
+      <a class="btn btn--label" href={links.whatsapp} data-link="whatsapp" target="_blank" rel="noopener noreferrer" hidden={!links.whatsapp}>
         <Icon name="whatsapp" />
         WhatsApp
       </a>
@@ -102,7 +102,7 @@ const jsonLd = {
           </p>
           <div class="hero__actions">
             <a class="btn btn--label" href="#promocoes">Ver promoções</a>
-            <a class="btn btn--ghost" href={links.whatsapp} data-link="whatsapp" hidden={!links.whatsapp}>
+            <a class="btn btn--ghost" href={links.whatsapp} data-link="whatsapp" target="_blank" rel="noopener noreferrer" hidden={!links.whatsapp}>
               <Icon name="whatsapp" />
               Chamar no WhatsApp
             </a>
@@ -128,7 +128,7 @@ const jsonLd = {
 
       <p class="wrap promos__empty" data-promo-empty hidden={promos.length > 0}>
         Nenhuma promoção publicada agora. As ofertas do dia saem primeiro no
-        <a href={links.whatsapp ?? '#onde-estamos'} data-link="whatsapp">nosso WhatsApp</a>.
+        <a href={links.whatsapp ?? '#onde-estamos'} data-link="whatsapp" target="_blank" rel="noopener noreferrer">nosso WhatsApp</a>.
       </p>
     </section>
 
@@ -169,11 +169,11 @@ const jsonLd = {
             <p class="visit__ref" data-bind="reference" hidden={!s.reference}>{s.reference}</p>
 
             <div class="visit__actions">
-              <a class="btn btn--label" href={links.maps} data-link="maps">
+              <a class="btn btn--label" href={links.maps} data-link="maps" target="_blank" rel="noopener noreferrer">
                 <Icon name="route" />
                 Como chegar
               </a>
-              <a class="btn btn--ghost" href={links.waze} data-link="waze">Abrir no Waze</a>
+              <a class="btn btn--ghost" href={links.waze} data-link="waze" target="_blank" rel="noopener noreferrer">Abrir no Waze</a>
             </div>
 
             <div class="hours">
@@ -185,7 +185,7 @@ const jsonLd = {
               <a href={links.phone} data-link="phone" hidden={!links.phone}>
                 Telefone <span data-label="phone">{links.phoneLabel}</span>
               </a>
-              <a href={links.whatsapp} data-link="whatsapp" hidden={!links.whatsapp}>
+              <a href={links.whatsapp} data-link="whatsapp" target="_blank" rel="noopener noreferrer" hidden={!links.whatsapp}>
                 WhatsApp <span data-label="whatsapp">{links.whatsappLabel}</span>
               </a>
               <a href={links.email} data-link="email" hidden={!links.email}>
@@ -224,7 +224,7 @@ const jsonLd = {
         <div>
           <h2>Contato</h2>
           <ul>
-            <li><a href={links.whatsapp} data-link="whatsapp" hidden={!links.whatsapp}>WhatsApp</a></li>
+            <li><a href={links.whatsapp} data-link="whatsapp" target="_blank" rel="noopener noreferrer" hidden={!links.whatsapp}>WhatsApp</a></li>
             <li><a href={links.phone} data-link="phone" hidden={!links.phone}>Ligar para a loja</a></li>
             <li><a href={links.email} data-link="email" hidden={!links.email}>E-mail</a></li>
           </ul>
@@ -238,7 +238,7 @@ const jsonLd = {
     </div>
   </footer>
 
-  <a class="btn btn--label float-wa" href={links.whatsapp} data-link="whatsapp" data-float-wa data-visible="false" hidden={!links.whatsapp}>
+  <a class="btn btn--label float-wa" href={links.whatsapp} data-link="whatsapp" target="_blank" rel="noopener noreferrer" data-float-wa data-visible="false" hidden={!links.whatsapp}>
     <Icon name="whatsapp" />
     <span>WhatsApp</span>
   </a>
