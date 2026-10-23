@@ -107,13 +107,40 @@ export type DayHours = z.infer<typeof dayHoursSchema>;
 export type StoreSettings = z.infer<typeof storeSettingsSchema>;
 export type Promotion = z.infer<typeof promotionSchema>;
 export type Highlight = z.infer<typeof highlightSchema>;
+/** Link de banner: vazio, âncora interna, telefone ou https (espelha valid_banner_link no banco). */
+export const bannerLink = z
+  .string()
+  .trim()
+  .max(500)
+  .regex(/^$|^#[a-z0-9-]{1,40}$|^tel:\+\d{8,15}$|^https:\/\/[^\s<>"']+$/, 'Use um endereço https://, uma seção do site ou um telefone');
+
+export const bannerSchema = z
+  .object({
+    id: z.uuid().or(z.string().regex(/^seed-[a-z0-9-]+$/)),
+    title: requiredText(90),
+    image_path: z.string().min(1, 'Escolha a imagem do banner').max(200),
+    image_mobile_path: imagePath,
+    image_alt: requiredText(200),
+    link_url: bannerLink,
+    starts_at: isoDate,
+    ends_at: isoDate,
+    sort_order: z.number().int().min(0).max(9999),
+    published: z.boolean(),
+  })
+  .refine((b) => !b.starts_at || !b.ends_at || b.starts_at <= b.ends_at, {
+    message: 'A data final precisa ser depois da inicial',
+    path: ['ends_at'],
+  });
+
 export type News = z.infer<typeof newsSchema>;
+export type Banner = z.infer<typeof bannerSchema>;
 
 export interface SiteContent {
   settings: StoreSettings;
   promotions: Promotion[];
   highlights: Highlight[];
   news: News[];
+  banners: Banner[];
 }
 
 /** Teto de itens por lista: nunca validar volumes absurdos vindos da rede. */

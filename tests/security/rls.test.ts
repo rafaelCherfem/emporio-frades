@@ -1,5 +1,5 @@
 import { PGlite } from '@electric-sql/pglite';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 /**
@@ -61,7 +61,10 @@ async function denied(role: 'anon' | 'authenticated', userId: string | null, sql
 beforeAll(async () => {
   db = new PGlite();
   await db.exec(SUPABASE_STUBS);
-  await db.exec(readFileSync('supabase/migrations/20261023000000_init.sql', 'utf8'));
+  // Todas as migrações, na ordem do nome (como o Supabase aplica)
+  for (const f of readdirSync('supabase/migrations').filter((x) => x.endsWith('.sql')).sort()) {
+    await db.exec(readFileSync(`supabase/migrations/${f}`, 'utf8'));
+  }
   await db.exec(`
     insert into auth.users values ('${ADMIN}', 'dono@emporio.com'), ('${INTRUSO}', 'curioso@x.com');
     insert into public.admins (user_id) values ('${ADMIN}');
@@ -72,6 +75,11 @@ beforeAll(async () => {
     insert into public.promotions (title, published, starts_at) values ('Futura', true, now() + interval '1 day');
     insert into public.highlights (name, published) values ('Pão', true), ('Escondido', false);
     insert into public.news (title, published) values ('Nova', true), ('Rascunho', false);
+    insert into public.banners (title, image_path, image_alt, published) values
+      ('Banner no ar', 'banners/2026/a.webp', 'Espumantes', true),
+      ('Banner rascunho', 'banners/2026/b.webp', 'Rascunho', false);
+    insert into public.banners (title, image_path, image_alt, published, ends_at) values
+      ('Banner vencido', 'banners/2026/c.webp', 'Vencido', true, now() - interval '1 day');
   `);
 }, 60_000);
 
@@ -184,6 +192,38 @@ describe('controle positivo do helper', () => {
     expect(await denied('authenticated', ADMIN, "insert into public.promotions (title) values ('controle')")).toBe(false);
     expect(await denied('authenticated', ADMIN, "update public.store_settings set state = 'MG'")).toBe(false);
     expect(await denied('anon', null, 'select 1 from public.promotions')).toBe(false);
+  });
+});
+
+describe('banners', () => {
+  it('visitante vê só o banner publicado e dentro da validade', async () => {
+    const r = await as<{ title: string }>('anon', null, 'select title from public.banners order by title');
+    expect(r.rows.map((x) => x.title)).toEqual(['Banner no ar']);
+  });
+
+  it.each([
+    ['anon', null],
+    ['authenticated', INTRUSO],
+  ] as const)('%s não cria nem altera banners', async (role, uid) => {
+    expect(await denied(role, uid, "insert into public.banners (title, image_path, image_alt, published) values ('x', 'banners/x.webp', 'x', true)")).toBe(true);
+    expect(await denied(role, uid, "update public.banners set published = true")).toBe(true);
+    expect(await denied(role, uid, 'delete from public.banners')).toBe(true);
+  });
+
+  it('admin cria banner com link interno, telefone ou https', async () => {
+    for (const link of ['#promocoes', 'tel:+551135429564', 'https://www.instagram.com/emporiofrades_/', '']) {
+      expect(await denied('authenticated', ADMIN, `insert into public.banners (title, image_path, image_alt, link_url) values ('ok', 'banners/ok.webp', 'ok', '${link}')`)).toBe(false);
+    }
+  });
+
+  it.each([
+    ["link_url) values ('x', 'banners/x.webp', 'x', 'javascript:alert(1)')", 'link javascript:'],
+    ["link_url) values ('x', 'banners/x.webp', 'x', 'http://site.com')", 'link sem https'],
+    [`link_url) values ('x', 'banners/x.webp', 'x', 'https://a.com/"><script>')`, 'link com aspas e tags'],
+    ["link_url) values ('x', 'https://evil.com/a.png', 'x', '')", 'imagem externa'],
+    ["link_url) values ('x', 'banners/x.webp', '', '')", 'sem descrição da imagem'],
+  ])('recusa %s (%s)', async (values) => {
+    expect(await denied('authenticated', ADMIN, `insert into public.banners (title, image_path, image_alt, ${values}`)).toBe(true);
   });
 });
 

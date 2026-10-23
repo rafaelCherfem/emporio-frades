@@ -1,5 +1,6 @@
 import type { PublicConfig } from './config';
 import {
+  bannerSchema,
   highlightSchema,
   newsSchema,
   parseList,
@@ -17,6 +18,7 @@ import {
 const PROMO_COLS = 'id,title,description,price_from_cents,price_cents,unit,starts_at,ends_at,image_path,image_alt,sort_order,published';
 const HL_COLS = 'id,name,description,category,price_cents,unit,image_path,image_alt,sort_order,published';
 const NEWS_COLS = 'id,title,body,published_at,image_path,image_alt,published';
+const BANNER_COLS = 'id,title,image_path,image_mobile_path,image_alt,link_url,starts_at,ends_at,sort_order,published';
 const SETTINGS_COLS =
   'name,tagline,about,street,number,district,city,state,zip,reference,latitude,longitude,phone,whatsapp,whatsapp_message,email,instagram,facebook,tiktok,hours,updated_at';
 
@@ -38,11 +40,12 @@ export async function fetchContent(cfg: PublicConfig, timeoutMs = 6000): Promise
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const [settings, promotions, highlights, news] = await Promise.allSettled([
+    const [settings, promotions, highlights, news, banners] = await Promise.allSettled([
       getJson(cfg, `store_settings?select=${SETTINGS_COLS}&id=eq.1&limit=1`, ctrl.signal),
       getJson(cfg, `promotions?select=${PROMO_COLS}&order=sort_order.asc,created_at.desc&limit=24`, ctrl.signal),
       getJson(cfg, `highlights?select=${HL_COLS}&order=sort_order.asc&limit=24`, ctrl.signal),
       getJson(cfg, `news?select=${NEWS_COLS}&order=published_at.desc&limit=6`, ctrl.signal),
+      getJson(cfg, `banners?select=${BANNER_COLS}&order=sort_order.asc&limit=8`, ctrl.signal),
     ]);
 
     const out: Partial<SiteContent> = {};
@@ -53,6 +56,7 @@ export async function fetchContent(cfg: PublicConfig, timeoutMs = 6000): Promise
     if (promotions.status === 'fulfilled') out.promotions = parseList(promotionSchema, promotions.value);
     if (highlights.status === 'fulfilled') out.highlights = parseList(highlightSchema, highlights.value);
     if (news.status === 'fulfilled') out.news = parseList(newsSchema, news.value);
+    if (banners.status === 'fulfilled') out.banners = parseList(bannerSchema, banners.value);
 
     return Object.keys(out).length ? out : null;
   } catch {
