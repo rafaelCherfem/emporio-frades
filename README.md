@@ -63,9 +63,7 @@ Todo push na `main` roda os testes e publica em `https://<usuario>.github.io/emp
 
 ### 2. Cloudflare (produção)
 
-**Como está publicado hoje:** Cloudflare Workers com arquivos estáticos (`wrangler.jsonc`), ligado ao GitHub. Endereço: `https://emporio-frades.rafael-f-cherfem.workers.dev`. Build command `npm run build`, deploy command `npx wrangler deploy` e, em *Settings → Build → Variables and secrets*, as variáveis `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY`, `SITE_URL` e `NODE_VERSION=24`. Todo push na `main` publica sozinho.
-
-Alternativa equivalente pelo Cloudflare Pages:
+**Como está publicado hoje:** Cloudflare Pages ligado ao GitHub, em `https://emporio-frades.pages.dev`. Todo push na `main` publica sozinho. Passo a passo para refazer do zero:
 
 1. Cloudflare → **Workers & Pages → Create application**. Na tela de Workers, clique no link **"Looking to deploy Pages? Get started"** e escolha **Import an existing Git repository**.
 2. Autorize o Cloudflare no GitHub (só o repositório `emporio-frades` basta) e selecione o repositório.
