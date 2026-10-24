@@ -63,15 +63,24 @@ Todo push na `main` roda os testes e publica em `https://<usuario>.github.io/emp
 
 ### 2. Cloudflare Pages (produção)
 
-1. Suba este repositório para o GitHub.
-2. Cloudflare → **Workers & Pages → Create → Pages → Connect to Git** → escolha o repositório.
+1. Cloudflare → **Workers & Pages → Create application**. Na tela de Workers, clique no link **"Looking to deploy Pages? Get started"** e escolha **Import an existing Git repository**.
+2. Autorize o Cloudflare no GitHub (só o repositório `emporio-frades` basta) e selecione o repositório.
 3. Configuração de build:
+   - Project name: `emporio-frades` (vira `emporio-frades.pages.dev`)
+   - Framework preset: **Astro**
    - Build command: `npm run build`
-   - Output directory: `dist`
-   - Variáveis: `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` e `NODE_VERSION=24`
-4. Domínio próprio (opcional): **Custom domains** no projeto. Atualize `site` em `astro.config.mjs`, `public/robots.txt` e `public/sitemap.xml`.
+   - Build output directory: `dist`
+   - Variáveis de ambiente (Production):
+     - `PUBLIC_SUPABASE_URL` = `https://SEU-PROJETO.supabase.co`
+     - `PUBLIC_SUPABASE_ANON_KEY` = chave **publishable**/anon
+     - `SITE_URL` = o endereço final, ex. `https://emporio-frades.pages.dev` (depois, o domínio próprio)
+     - `NODE_VERSION` = `24`
+4. **Save and Deploy**. Todo push na `main` publica de novo sozinho.
+5. Supabase → **Authentication → URL Configuration**: *Site URL* = o endereço do Cloudflare; em *Redirect URLs* adicione `https://SEU-ENDERECO/admin/` (mantenha o do GitHub Pages se ainda usar a prévia).
 
-O build gera `dist/_headers` com a CSP já apontando para o seu Supabase.
+O build gera `dist/_headers` (CSP com o seu Supabase, HSTS, bloqueio de iframe etc.), `robots.txt` e `sitemap.xml`, todos a partir das variáveis acima. Para conferir: `curl -I https://SEU-ENDERECO/` deve mostrar `content-security-policy` e `strict-transport-security`.
+
+**Domínio próprio depois** (ex. `.com.br` no Registro.br): projeto no Cloudflare → **Custom domains → Set up a domain**, siga as instruções de DNS, troque `SITE_URL` para o domínio novo, publique de novo e atualize as URLs no Supabase.
 
 ---
 
