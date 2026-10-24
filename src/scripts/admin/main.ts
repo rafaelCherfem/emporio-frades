@@ -776,7 +776,26 @@ async function renderSettings(panel: HTMLElement) {
    Início
    ========================================================= */
 
+/**
+ * Anti-clickjacking: no Cloudflare o cabeçalho frame-ancestors já impede o painel
+ * de abrir dentro de outro site, mas o GitHub Pages não envia cabeçalhos próprios
+ * (e frame-ancestors não funciona por <meta>). Dentro de um iframe, o painel não abre.
+ */
+function isFramed(): boolean {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+}
+
 export async function initAdmin() {
+  if (isFramed()) {
+    document.body.replaceChildren(
+      el('p', { class: 'muted', text: 'Por segurança, o painel só abre direto no navegador.' }),
+    );
+    return;
+  }
   if (!cfg.enabled) {
     show('setup');
     return;

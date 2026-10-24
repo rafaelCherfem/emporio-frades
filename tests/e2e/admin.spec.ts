@@ -25,6 +25,25 @@ async function pngBuffer(page: Page): Promise<Buffer> {
 test.describe('painel do dono', () => {
   test.skip(({ isMobile }) => isMobile, 'fluxos do painel testados no desktop');
 
+  test('dentro de iframe (clickjacking) o painel não abre, mesmo sem o cabeçalho frame-ancestors', async ({ page, baseURL }) => {
+    await fakeSupabase(page);
+    // Simula o GitHub Pages: tira os cabeçalhos que já bloqueariam o iframe
+    await page.route('**/admin/', async (route) => {
+      const res = await route.fetch();
+      const headers = { ...res.headers() };
+      delete headers['x-frame-options'];
+      headers['content-security-policy'] = (headers['content-security-policy'] ?? '').replace(/frame-ancestors[^;]*;?/, '');
+      await route.fulfill({ response: res, headers });
+    });
+    await page.route('**/isca.html', (route) =>
+      route.fulfill({ contentType: 'text/html', body: `<iframe src="${baseURL}/admin/" width="800" height="600"></iframe>` }),
+    );
+    await page.goto('/isca.html');
+    const frame = page.frameLocator('iframe');
+    await expect(frame.getByText('Por segurança, o painel só abre direto no navegador.')).toBeVisible();
+    await expect(frame.locator('#email')).toHaveCount(0);
+  });
+
   test('senha errada mostra mensagem clara e limpa o campo', async ({ page }) => {
     await fakeSupabase(page);
     await login(page, 'errada');
