@@ -171,7 +171,7 @@ test.describe('site público', () => {
     await page.goto('/');
     const card = page.locator('.product').first();
     await expect(card.locator('.product__name')).toHaveText('Prosecco italiano');
-    await expect(card.locator('.product__media img')).toHaveAttribute('src', /ilustracoes\/espumante\.svg$/);
+    await expect(card.locator('.product__media img')).toHaveAttribute('src', /garrafas\/espumante\.webp$/);
     await expect(card.locator('.product__price')).toContainText(/79,90/);
     await expect(card.locator('.product__cta')).toHaveAttribute('href', /^https:\/\/wa\.me\//);
   });

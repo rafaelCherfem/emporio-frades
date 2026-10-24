@@ -1452,16 +1452,15 @@ a:hover {
   aspect-ratio: 1;
   padding: 1rem;
   background:
-    radial-gradient(60% 18% at 50% 92%, rgb(23 32 27 / 0.16), transparent 70%),
     radial-gradient(80% 70% at 50% 15%, #ffffff, transparent 70%),
-    linear-gradient(#eef0e8, #e2e6da);
+    linear-gradient(#f3f4ee, #e4e7dc);
 }
 
 .product__media img {
   position: absolute;
-  inset: 7% 0 6%;
+  inset: 3% 0 2%;
   margin: auto;
-  height: 87%;
+  height: 95%;
   width: auto;
   max-width: 90%;
   object-fit: contain;
@@ -1681,15 +1680,14 @@ a:hover {
   transform: scale(1.04);
 }
 
-/* Sem foto: ilustração sobre fundo verde, como um cartaz */
+/* Sem foto: a garrafa no mesmo "palco" claro dos produtos */
 .news-card__media--illustration {
   display: grid;
   place-items: center;
   padding: 1rem;
   background:
-    radial-gradient(60% 80% at 50% 40%, rgb(237 197 110 / 0.22), transparent 70%),
-    url('../assets/grain-light.svg') 0 0 / 240px 240px,
-    var(--bottle);
+    radial-gradient(70% 90% at 50% 10%, #ffffff, transparent 70%),
+    linear-gradient(#f3f4ee, #e4e7dc);
 }
 
 .news-card__media--illustration img {
@@ -1697,9 +1695,8 @@ a:hover {
   inset: 8% 0;
   margin: auto;
   width: auto;
-  height: 84%;
+  height: 88%;
   object-fit: contain;
-  filter: drop-shadow(0 12px 14px rgb(0 0 0 / 0.45));
 }
 
 .news-card__inner:hover .news-card__media--illustration img {

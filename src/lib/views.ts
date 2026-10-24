@@ -92,7 +92,7 @@ export function promotionList(list: Promotion[], env: ViewEnv): VNode[] {
   return list.filter((p) => isPromotionActive(p, env.now)).map((p) => promotionTag(p, env));
 }
 
-/* Ilustração reserva: escolhe a garrafa desenhada pelo nome/categoria do item */
+/* Imagem reserva: escolhe a garrafa (estilo foto de vitrine) pelo nome/categoria do item */
 
 const ILLUSTRATIONS: [RegExp, string][] = [
   [/espumante|prosecco|champa(gne|nhe)|cava\b|brut|moscatel/, 'espumante'],
@@ -103,12 +103,18 @@ const ILLUSTRATIONS: [RegExp, string][] = [
   [/\bgin\b|vodka|t[oô]nica|tequila|licor|destilado|aperitivo/, 'gin'],
   [/ta[çc]a|copo|acess[oó]rio|saca-rolha|decanter/, 'taca'],
   [/presente|kit|cesta|caixa|encomenda/, 'presente'],
+  [/tinto|vinho|malbec|cabernet|merlot|carm[eé]n[eè]re|pinot|syrah|tannat/, 'tinto'],
 ];
 
 export function illustrationFor(...texts: (string | null | undefined)[]): string {
-  const t = texts.filter(Boolean).join(' ').toLowerCase();
-  const hit = ILLUSTRATIONS.find(([re]) => re.test(t));
-  return asset(`media/ilustracoes/${hit ? hit[1] : 'tinto'}.svg`);
+  // O nome/título manda; o texto só decide se o título não disser nada
+  let hit: [RegExp, string] | undefined;
+  for (const text of texts) {
+    const t = (text ?? '').toLowerCase();
+    hit = t ? ILLUSTRATIONS.find(([re]) => re.test(t)) : undefined;
+    if (hit) break;
+  }
+  return asset(`media/garrafas/${hit ? hit[1] : 'tinto'}.webp`);
 }
 
 /** Foto do item (Supabase) ou a ilustração correspondente. */
@@ -122,8 +128,8 @@ function mediaFor(path: string | null, alt: string, env: ViewEnv, fallbackTexts:
       alt: photo ? alt || '' : '',
       loading: 'lazy',
       decoding: 'async',
-      width: 320,
-      height: 400,
+      width: photo ? 320 : 280,
+      height: photo ? 400 : 500,
     }),
   );
 }

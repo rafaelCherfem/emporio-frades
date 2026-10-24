@@ -3,7 +3,7 @@ import { demoContent as seed, storeSettings } from '../../src/data/seed';
 import { centsToInput, formatBRL, isPromotionActive, parseBRLToCents, splitPrice } from '../../src/lib/format';
 import { groupHours, openStatus } from '../../src/lib/hours';
 import { highlightSchema, parseList, promotionSchema, storeSettingsSchema } from '../../src/lib/schemas';
-import { promotionList } from '../../src/lib/views';
+import { illustrationFor, promotionList } from '../../src/lib/views';
 import { toHTML } from '../../src/lib/vnode';
 
 /** Cria uma data a partir do horário de Brasília (UTC-3, sem horário de verão). */
@@ -150,5 +150,26 @@ describe('promoções', () => {
     );
     expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
     expect(html).not.toContain('<img src=x');
+  });
+});
+
+describe('imagem reserva das garrafas', () => {
+  const pick = (...t: (string | null)[]) => illustrationFor(...t).replace(/^.*\/|\.webp$/g, '');
+
+  it('escolhe pela bebida do nome', () => {
+    expect(pick('Prosecco italiano')).toBe('espumante');
+    expect(pick('Rosé chileno')).toBe('rose');
+    expect(pick('Uísque escocês 12 anos')).toBe('whisky');
+    expect(pick('Cerveja belga de trigo')).toBe('cerveja');
+    expect(pick('Gin London Dry')).toBe('gin');
+    expect(pick('Taça de cristal para tinto')).toBe('taca');
+    expect(pick('Tinto português do Douro')).toBe('tinto');
+  });
+
+  it('o título manda; o texto só desempata', () => {
+    expect(pick('Kits de presente sob encomenda', 'Monte o seu com vinho, espumante, taças')).toBe('presente');
+    expect(pick('Chegou nova leva de vinhos chilenos', 'Tintos, brancos e rosés')).toBe('tinto');
+    expect(pick('Novidade da semana', 'Chegaram cervejas artesanais')).toBe('cerveja');
+    expect(pick('Promoção', null)).toBe('tinto');
   });
 });
