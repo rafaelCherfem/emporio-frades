@@ -80,6 +80,10 @@ beforeAll(async () => {
       ('Banner rascunho', 'banners/2026/b.webp', 'Rascunho', false);
     insert into public.banners (title, image_path, image_alt, published, ends_at) values
       ('Banner vencido', 'banners/2026/c.webp', 'Vencido', true, now() - interval '1 day');
+    insert into public.special_days (date, title) values
+      ((now() at time zone 'America/Sao_Paulo')::date - 10, 'Feriado antigo'),
+      ((now() at time zone 'America/Sao_Paulo')::date - 1, 'Ontem'),
+      ('2099-12-25', 'Natal');
   `);
 }, 60_000);
 
@@ -224,6 +228,49 @@ describe('banners', () => {
     ["link_url) values ('x', 'banners/x.webp', '', '')", 'sem descrição da imagem'],
   ])('recusa %s (%s)', async (values) => {
     expect(await denied('authenticated', ADMIN, `insert into public.banners (title, image_path, image_alt, ${values}`)).toBe(true);
+  });
+});
+
+describe('datas especiais (feriados)', () => {
+  it('visitante vê as de ontem em diante, nunca as antigas', async () => {
+    const r = await as<{ title: string }>('anon', null, 'select title from public.special_days order by date');
+    expect(r.rows.map((x) => x.title)).toEqual(['Ontem', 'Natal']);
+  });
+
+  it('admin vê todas, inclusive as que já passaram', async () => {
+    const r = await as<{ title: string }>('authenticated', ADMIN, 'select title from public.special_days order by date');
+    expect(r.rows.map((x) => x.title)).toEqual(['Feriado antigo', 'Ontem', 'Natal']);
+  });
+
+  it.each([
+    ['anon', null],
+    ['authenticated', INTRUSO],
+  ] as const)('%s não cria, altera nem apaga datas especiais', async (role, uid) => {
+    expect(await denied(role, uid, "insert into public.special_days (date, title) values ('2099-01-01', 'x')")).toBe(true);
+    expect(await denied(role, uid, "update public.special_days set closed = false")).toBe(true);
+    expect(await denied(role, uid, 'delete from public.special_days')).toBe(true);
+  });
+
+  it('admin programa feriado fechado ou com horário reduzido', async () => {
+    expect(await denied('authenticated', ADMIN, "insert into public.special_days (date, title) values ('2099-01-01', 'Ano Novo')")).toBe(false);
+    expect(
+      await denied('authenticated', ADMIN, "insert into public.special_days (date, title, closed, open, close, notice_days) values ('2099-12-24', 'Véspera', false, '09:00', '14:00', 15)"),
+    ).toBe(false);
+  });
+
+  it.each([
+    ["('2099-02-01', '')", 'sem motivo'],
+    ["('2099-12-25', 'Duplicada')", 'data repetida'],
+  ])('recusa %s (%s)', async (values) => {
+    expect(await denied('authenticated', ADMIN, `insert into public.special_days (date, title) values ${values}`)).toBe(true);
+  });
+
+  it.each([
+    ["closed, open, close) values ('2099-03-01', 'x', false, '10:00', '10:00')", 'abre e fecha no mesmo horário'],
+    ["closed, open, close) values ('2099-03-02', 'x', false, '25:00', '10:00')", 'hora inválida'],
+    ["notice_days) values ('2099-03-03', 'x', 999)", 'antecedência absurda'],
+  ])('recusa %s (%s)', async (values) => {
+    expect(await denied('authenticated', ADMIN, `insert into public.special_days (date, title, ${values}`)).toBe(true);
   });
 });
 

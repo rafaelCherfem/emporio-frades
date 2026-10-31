@@ -132,8 +132,23 @@ export const bannerSchema = z
     path: ['ends_at'],
   });
 
+/** Data especial: feriado, dia fechado ou horário diferente (espelha special_days no banco). */
+export const specialDaySchema = z
+  .object({
+    id: z.uuid().or(z.string().regex(/^seed-[a-z0-9-]+$/)),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Escolha a data'),
+    title: requiredText(60),
+    closed: z.boolean(),
+    open: time,
+    close: time,
+    note: text(160),
+    notice_days: z.number().int().min(0, 'Entre 0 e 60 dias').max(60, 'Entre 0 e 60 dias'),
+  })
+  .refine((d) => d.closed || d.open !== d.close, { message: 'Abertura e fechamento iguais', path: ['close'] });
+
 export type News = z.infer<typeof newsSchema>;
 export type Banner = z.infer<typeof bannerSchema>;
+export type SpecialDay = z.infer<typeof specialDaySchema>;
 
 export interface SiteContent {
   settings: StoreSettings;
@@ -141,6 +156,7 @@ export interface SiteContent {
   highlights: Highlight[];
   news: News[];
   banners: Banner[];
+  specialDays: SpecialDay[];
 }
 
 /** Teto de itens por lista: nunca validar volumes absurdos vindos da rede. */
