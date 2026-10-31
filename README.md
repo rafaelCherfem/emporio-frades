@@ -45,7 +45,7 @@ npm run audit                    # dependências
 ### 1. Supabase
 
 1. Crie um projeto em [supabase.com](https://supabase.com) (região São Paulo).
-2. **SQL Editor** → cole e rode, nesta ordem, `supabase/migrations/20261023000000_init.sql` e `supabase/migrations/20261024000000_banners.sql`. Depois, se quiser, `supabase/seed.sql`.
+2. **SQL Editor** → cole e rode, nesta ordem, `supabase/migrations/20261023000000_init.sql` `supabase/migrations/20261024000000_banners.sql` e `supabase/migrations/20261031000000_special_days.sql`. Depois, se quiser, `supabase/seed.sql`.
 3. **Authentication → Sign In / Providers**: desligue **Allow new users to sign up**. Ninguém se cadastra sozinho.
 4. **Authentication → URL Configuration**: em *Site URL* coloque o endereço do site; em *Redirect URLs* adicione `https://SEU-DOMINIO/admin/` (necessário para "Esqueci a senha").
 5. **Authentication → Users → Add user**: crie o usuário do dono (e-mail e uma senha provisória; ele troca depois por "Esqueci a senha").
@@ -89,7 +89,7 @@ O build gera `dist/_headers` (CSP com o seu Supabase, HSTS, bloqueio de iframe e
 ## Guia rápido para o dono
 
 1. Acesse `https://SEU-DOMINIO/admin` e entre com e-mail e senha. (Salve esse endereço nos favoritos; ele não aparece no site.)
-2. Escolha a aba: **Banners**, **Promoções**, **Em alta**, **Novidades** ou **Dados da loja**.
+2. Escolha a aba: **Banners**, **Promoções**, **Em alta**, **Novidades**, **Feriados** ou **Dados da loja**.
 3. Clique em **Nova promoção** (ou **Editar**), preencha e clique em **Publicar**.
 4. Recarregue o site: a mudança aparece na hora, sem esperar nada.
 
@@ -100,6 +100,7 @@ Dicas:
 - As setas ↑ ↓ mudam a ordem em que os itens aparecem.
 - **Banners** são os cartazes que passam no topo do site, logo abaixo do toldo. Faça a arte no Canva (ou onde preferir) em **1920 × 720 px** e, se quiser uma versão própria para celular, em **1080 × 1350 px**. Deixe o texto importante longe das bordas. Em "O que o banner diz", escreva o texto da arte (é o que leitores de tela e o Google leem). Com datas de início e fim, o banner entra e sai sozinho. Enquanto não houver nenhum banner publicado, o site mostra três cartazes prontos (espumantes, vinhos, destilados).
 - Em **Em alta** e **Novidades**, a foto da garrafa com fundo branco (ou PNG sem fundo) fica com cara de vitrine. Sem foto, o site usa um desenho da bebida escolhido pelo nome/categoria (espumante, tinto, rosé, cerveja, whisky...).
+- **Feriados**: programe com antecedência os dias em que a loja fecha ou tem horário diferente (Natal, inventário, Carnaval...). Em "Avisar no site quantos dias antes", escolha quando o aviso começa a aparecer no topo do site. No próprio dia, o "Aberto agora / Fechado" já considera a data. Datas que já passaram somem do site sozinhas.
 - Em **Dados da loja** ficam endereço, telefone, WhatsApp (e a mensagem que já vem escrita), redes sociais e horários.
 
 ---

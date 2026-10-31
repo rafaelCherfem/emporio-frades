@@ -37,6 +37,7 @@ O site público é estático e só lê dados já filtrados pelo banco. Toda escr
 | Sem `innerHTML`, `eval`, `document.write`, `alert/confirm` | todo `src/` | `static.test.ts` (varredura) |
 | Chave secreta nunca vai para o front | `config.ts` recusa `sb_secret_` | `static.test.ts` |
 | Banner com link `javascript:`/`http:`, imagem externa ou sem texto alternativo é recusado | `valid_banner_link()`, CHECKs, `bannerSchema`, `bannerSlides()` | `rls.test.ts` › banners, e2e "vitrine" e "cria um banner" |
+| Feriados: só admin cria/edita/apaga; público só vê de ontem em diante; data única, hora válida, antecedência 0–60 dias; motivo e recado renderizados como texto | migração `special_days`, `specialDaySchema`, `specialNotice()` | `rls.test.ts` › datas especiais, `domain.test.ts` › feriados, e2e "programa um feriado" |
 | Painel não abre dentro de iframe (clickjacking), inclusive no GitHub Pages | `admin/main.ts` (`isFramed`) + `frame-ancestors 'none'` no Cloudflare | e2e "dentro de iframe" |
 | Nenhum segredo no histórico do Git | varredura de `sb_secret_`, `service_role`, JWT e chaves privadas em `git log -p` | revisão em 24/10 |
 | Fotos sem metadados (GPS) e no tamanho certo | `admin/image.ts` (redesenho em canvas) | e2e "cria uma promoção com foto" |
