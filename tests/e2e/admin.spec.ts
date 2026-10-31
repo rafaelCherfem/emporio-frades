@@ -153,6 +153,40 @@ test.describe('painel do dono', () => {
     });
   });
 
+  test('programa um feriado: data, motivo, horário e antecedência do aviso', async ({ page }) => {
+    const state = await fakeSupabase(page);
+    await login(page);
+    await page.getByRole('link', { name: 'Feriados' }).click();
+    await expect(page.getByRole('heading', { name: 'Feriados e datas especiais', level: 1 })).toBeVisible();
+    await page.getByRole('button', { name: 'Nova data especial' }).click();
+    const dialog = page.getByRole('dialog');
+
+    // fechado o dia todo: horários ficam desligados
+    await expect(dialog.getByLabel('Abre às')).toBeDisabled();
+    await dialog.getByRole('button', { name: 'Salvar', exact: true }).click();
+    await expect(dialog.locator('#f-date-err')).toHaveText('Escolha a data');
+
+    await dialog.getByLabel('Data').fill('2026-12-24');
+    await dialog.getByLabel('Motivo').fill('Véspera de Natal');
+    await dialog.getByLabel('Loja fechada o dia todo').uncheck();
+    await expect(dialog.getByLabel('Abre às')).toBeEnabled();
+    await dialog.getByLabel('Fecha às').fill('09:00');
+    await dialog.getByRole('button', { name: 'Salvar', exact: true }).click();
+    await expect(dialog.locator('#f-close-err')).toHaveText('Abertura e fechamento iguais');
+
+    await dialog.getByLabel('Fecha às').fill('14:00');
+    await dialog.getByLabel('Avisar no site quantos dias antes').fill('15');
+    await dialog.getByLabel('Recado para os clientes').fill('Feliz Natal!');
+    await dialog.getByRole('button', { name: 'Salvar', exact: true }).click();
+    await expect(page.getByRole('status').filter({ hasText: 'Salvo.' })).toBeVisible();
+
+    expect(state.inserts[0]).toMatchObject({
+      table: 'special_days',
+      body: { date: '2026-12-24', title: 'Véspera de Natal', closed: false, open: '09:00', close: '14:00', note: 'Feliz Natal!', notice_days: 15 },
+    });
+    expect(state.uploads).toHaveLength(0);
+  });
+
   test('arquivo que não é imagem é recusado antes de subir', async ({ page }) => {
     const state = await fakeSupabase(page);
     await login(page);

@@ -571,3 +571,9 @@ legend {
 .toast--error {
   background: var(--wine);
 }
+
+/* Campo que não se aplica (ex.: horários de um feriado com a loja fechada) */
+.field input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

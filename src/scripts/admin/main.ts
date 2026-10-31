@@ -2,13 +2,14 @@ import { createClient, type Session, type SupabaseClient } from '@supabase/supab
 import type { ZodError } from 'zod';
 import { readConfig } from '../../lib/config';
 import { formatBRL, formatDateShort, isPromotionActive } from '../../lib/format';
-import { DAY_NAMES } from '../../lib/hours';
+import { DAY_NAMES, daysBetween, shortDate, storeDate, weekdayOf } from '../../lib/hours';
 import { imageUrl } from '../../lib/safe';
 import {
   bannerSchema,
   highlightSchema,
   newsSchema,
   promotionSchema,
+  specialDaySchema,
   storeSettingsSchema,
   type DayHours,
   type StoreSettings,
@@ -22,7 +23,13 @@ type Row = Record<string, unknown> & { id: string };
 const cfg = readConfig();
 let sb: SupabaseClient;
 
-const SCHEMAS = { banners: bannerSchema, promotions: promotionSchema, highlights: highlightSchema, news: newsSchema } as const;
+const SCHEMAS = {
+  banners: bannerSchema,
+  promotions: promotionSchema,
+  highlights: highlightSchema,
+  news: newsSchema,
+  special_days: specialDaySchema,
+} as const;
 
 /* =========================================================
    Telas
@@ -50,6 +57,7 @@ function friendlyError(err: unknown): string {
   if (/rate limit|too many/i.test(msg)) return 'Muitas tentativas seguidas. Espere alguns minutos e tente de novo.';
   if (/jwt|session|not authenticated/i.test(msg)) return 'Sua sessão expirou. Entre de novo.';
   if (/row-level security|permission denied/i.test(msg)) return 'Sua conta não tem permissão para essa alteração.';
+  if (/duplicate key|unique/i.test(msg)) return 'Já existe um cadastro com esse valor (por exemplo, a mesma data).';
   if (/violates check constraint/i.test(msg)) return 'Algum campo está fora do formato permitido. Revise e tente de novo.';
   if (/failed to fetch|network/i.test(msg)) return 'Sem conexão com o servidor. Verifique a internet.';
   if (/password/i.test(msg) && /weak|short|least/i.test(msg)) return 'Senha fraca. Use pelo menos 10 caracteres, misturando letras e números.';
@@ -161,7 +169,7 @@ async function enter(session: Session | null) {
    ========================================================= */
 
 type Tab = Entity | 'settings';
-const TABS: Tab[] = ['banners', 'promotions', 'highlights', 'news', 'settings'];
+const TABS: Tab[] = ['banners', 'promotions', 'highlights', 'news', 'special_days', 'settings'];
 
 function currentTab(): Tab {
   const t = location.hash.slice(1) as Tab;
@@ -184,6 +192,15 @@ function openTab(tab: Tab) {
    ========================================================= */
 
 function statusOf(cfgE: EntityConfig, row: Row): { label: string; tone: 'on' | 'off' | 'warn' } {
+  if (cfgE.table === 'special_days') {
+    const today = storeDate(new Date());
+    const date = String(row['date']);
+    const diff = daysBetween(today, date);
+    if (diff < 0) return { label: 'Já passou', tone: 'off' };
+    const notice = Number(row['notice_days'] ?? 7);
+    if (diff <= notice) return { label: 'Avisando no site', tone: 'on' };
+    return { label: `Aviso a partir de ${shortDate(storeDate(new Date(), diff - notice))}`, tone: 'warn' };
+  }
   if (!row['published']) return { label: 'Rascunho', tone: 'off' };
   if (cfgE.table === 'promotions' || cfgE.table === 'banners') {
     const p = row as unknown as { published: boolean; starts_at: string | null; ends_at: string | null };
@@ -216,13 +233,20 @@ async function renderEntity(panel: HTMLElement, cfgE: EntityConfig) {
     const st = statusOf(cfgE, row);
     const thumb = imageUrl(row['image_path'], cfg.supabaseUrl);
     const wide = cfgE.table === 'banners';
-    const price = typeof row['price_cents'] === 'number' ? formatBRL(row['price_cents']) : null;
+    const price =
+      typeof row['price_cents'] === 'number'
+        ? formatBRL(row['price_cents'])
+        : cfgE.table === 'special_days'
+          ? `${DAY_NAMES[weekdayOf(String(row['date']))]}, ${shortDate(String(row['date']))} · ${row['closed'] ? 'Fechado' : `${row['open']} às ${row['close']}`}`
+          : null;
 
     list.append(
       el(
         'li',
         { class: 'row' },
-        thumb
+        cfgE.table === 'special_days'
+          ? null
+          : thumb
           ? el('img', { class: `row__thumb${wide ? ' row__thumb--wide' : ''}`, attrs: { src: thumb, alt: '', width: wide ? 112 : 56, height: 56, loading: 'lazy' } })
           : el('span', { class: 'row__thumb row__thumb--empty', attrs: { 'aria-hidden': 'true' } }),
         el(
@@ -404,12 +428,14 @@ function buildField(f: Field, value: unknown, state: ImageState): HTMLElement {
     ta.value = toInput(f, value);
     control = ta;
   } else {
-    const isDate = f.type.startsWith('date');
+    const isDate = f.type.startsWith('date') || f.type === 'day';
     const input = el('input', {
       attrs: {
         ...common,
-        type: isDate ? 'date' : 'text',
-        inputmode: f.type === 'money' ? 'decimal' : undefined,
+        type: isDate ? 'date' : f.type === 'time' ? 'time' : f.type === 'number' ? 'number' : 'text',
+        inputmode: f.type === 'money' ? 'decimal' : f.type === 'number' ? 'numeric' : undefined,
+        min: f.type === 'number' ? f.min : undefined,
+        max: f.type === 'number' ? f.max : undefined,
         list: f.list ? `${id}-list` : undefined,
         autocomplete: 'off',
       },
@@ -478,7 +504,7 @@ function openEditor(cfgE: EntityConfig, row: Row | null, count: number) {
   const isNew = !row;
 
   const fields = cfgE.fields.map((f) =>
-    buildField(f, row ? row[f.name] : f.type === 'checkbox' ? true : null, states.get(f.name) ?? noImage),
+    buildField(f, row ? row[f.name] : (f.initial ?? (f.type === 'checkbox' ? true : null)), states.get(f.name) ?? noImage),
   );
   const formError = el('p', { class: 'form-error', attrs: { role: 'alert', hidden: true } });
   const save = el('button', { class: 'btn btn--label', text: isNew ? 'Publicar' : 'Salvar alterações', attrs: { type: 'submit' } });
@@ -510,10 +536,20 @@ function openEditor(cfgE: EntityConfig, row: Row | null, count: number) {
   // Texto do botão acompanha o "Publicado"
   const pubBox = form.querySelector<HTMLInputElement>('[name="published"]');
   const syncLabel = () => {
-    if (isNew) save.textContent = pubBox?.checked ? 'Publicar' : 'Salvar rascunho';
+    // Itens sem "publicado" (ex.: feriados) só têm salvar
+    if (isNew) save.textContent = !pubBox ? 'Salvar' : pubBox.checked ? 'Publicar' : 'Salvar rascunho';
   };
   pubBox?.addEventListener('change', syncLabel);
   syncLabel();
+
+  // Data especial: com a loja fechada o dia todo, os horários não se aplicam
+  const closedBox = form.querySelector<HTMLInputElement>('[name="closed"]');
+  if (cfgE.table === 'special_days' && closedBox) {
+    const times = [...form.querySelectorAll<HTMLInputElement>('[name="open"], [name="close"]')];
+    const syncTimes = () => times.forEach((t) => (t.disabled = closedBox.checked));
+    closedBox.addEventListener('change', syncTimes);
+    syncTimes();
+  }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -564,7 +600,7 @@ function openEditor(cfgE: EntityConfig, row: Row | null, count: number) {
       // 3. Subir as imagens novas (se houver)
       for (const [name, st] of states) {
         if (!st.pending) continue;
-        const path = imagePathFor(cfgE.folder, st.pending.type);
+        const path = imagePathFor(cfgE.folder!, st.pending.type);
         const { error } = await sb.storage.from('media').upload(path, st.pending, {
           contentType: st.pending.type,
           cacheControl: '31536000',
@@ -587,14 +623,14 @@ function openEditor(cfgE: EntityConfig, row: Row | null, count: number) {
         .map(([, path]) => path!);
       if (stale.length) await sb.storage.from('media').remove(stale);
 
-      toast(isNew ? (values['published'] ? 'Publicado.' : 'Rascunho salvo.') : 'Alterações salvas.');
+      toast(isNew ? (!('published' in values) ? 'Salvo.' : values['published'] ? 'Publicado.' : 'Rascunho salvo.') : 'Alterações salvas.');
       dialog.close();
       openTab(cfgE.table);
     } catch (err) {
       if (uploaded.length) await sb.storage.from('media').remove(uploaded);
       formError.textContent = friendlyError(err);
       formError.hidden = false;
-      setBusy(save, false, isNew ? 'Publicar' : 'Salvar alterações');
+      setBusy(save, false, isNew ? (pubBox ? 'Publicar' : 'Salvar') : 'Salvar alterações');
     }
   });
 

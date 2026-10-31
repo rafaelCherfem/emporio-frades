@@ -5,7 +5,18 @@ import { centsToInput, parseBRLToCents } from '../../lib/format';
  * ler o valor digitado e devolvê-lo no formato do banco.
  */
 
-export type FieldType = 'text' | 'textarea' | 'money' | 'date-start' | 'date-end' | 'date-publish' | 'checkbox' | 'image';
+export type FieldType =
+  | 'text'
+  | 'textarea'
+  | 'money'
+  | 'date-start'
+  | 'date-end'
+  | 'date-publish'
+  | 'day'
+  | 'time'
+  | 'number'
+  | 'checkbox'
+  | 'image';
 
 export interface Field {
   name: string;
@@ -18,9 +29,13 @@ export interface Field {
   list?: string[];
   /** Imagem: maior lado após otimizar (px) */
   maxSide?: number;
+  /** Número: limites */
+  min?: number;
+  /** Valor inicial ao criar */
+  initial?: unknown;
 }
 
-export type Entity = 'banners' | 'promotions' | 'highlights' | 'news';
+export type Entity = 'banners' | 'promotions' | 'highlights' | 'news' | 'special_days';
 
 export type ImageFolder = 'banners' | 'promocoes' | 'destaques' | 'novidades';
 
@@ -29,7 +44,7 @@ export interface EntityConfig {
   title: string;
   singular: string;
   newLabel: string;
-  folder: ImageFolder;
+  folder?: ImageFolder;
   labelField: string;
   order: { column: string; ascending: boolean };
   sortable: boolean;
@@ -99,6 +114,24 @@ export const ENTITIES: Record<Entity, EntityConfig> = {
       { name: 'published', label: 'Publicado no site', type: 'checkbox' },
     ],
   },
+  special_days: {
+    table: 'special_days',
+    title: 'Feriados e datas especiais',
+    singular: 'data especial',
+    newLabel: 'Nova data especial',
+    labelField: 'title',
+    order: { column: 'date', ascending: true },
+    sortable: false,
+    fields: [
+      { name: 'date', label: 'Data', type: 'day', required: true, help: 'Pode programar com meses de antecedência.' },
+      { name: 'title', label: 'Motivo', type: 'text', max: 60, required: true, placeholder: 'Natal', list: ['Feriado', 'Natal', 'Véspera de Natal', 'Ano Novo', 'Véspera de Ano Novo', 'Carnaval', 'Sexta-feira Santa', 'Corpus Christi', 'Balanço', 'Inventário'] },
+      { name: 'closed', label: 'Loja fechada o dia todo', type: 'checkbox', initial: true },
+      { name: 'open', label: 'Abre às', type: 'time', initial: '09:00', help: 'Só vale se a loja abrir nesse dia (desmarque "fechada" acima).' },
+      { name: 'close', label: 'Fecha às', type: 'time', initial: '13:00' },
+      { name: 'note', label: 'Recado para os clientes', type: 'text', max: 160, placeholder: 'Voltamos dia 26 no horário normal.', help: 'Opcional. Aparece no aviso do site.' },
+      { name: 'notice_days', label: 'Avisar no site quantos dias antes', type: 'number', min: 0, max: 60, initial: 7, help: 'Ex.: 7 = o aviso aparece no topo do site uma semana antes. 0 = só no próprio dia.' },
+    ],
+  },
   news: {
     table: 'news',
     title: 'Novidades',
@@ -146,6 +179,8 @@ export function toInput(field: Field, value: unknown): string {
     case 'date-end':
     case 'date-publish':
       return isoToDateInput(typeof value === 'string' ? value : null);
+    case 'number':
+      return typeof value === 'number' ? String(value) : '';
     default:
       return typeof value === 'string' ? value : '';
   }
@@ -166,6 +201,18 @@ export function fromInput(field: Field, raw: string): { value: unknown; error?: 
       return { value: v ? dateInputToIso(v, 'end') : null };
     case 'date-publish':
       return { value: dateInputToIso(v || isoToDateInput(new Date().toISOString()), 'publish') };
+    case 'day':
+      return /^\d{4}-\d{2}-\d{2}$/.test(v) ? { value: v } : { value: null, error: 'Escolha a data' };
+    case 'time':
+      return /^([01]\d|2[0-3]):[0-5]\d$/.test(v) ? { value: v } : { value: null, error: 'Use o formato 09:00' };
+    case 'number': {
+      const n = Number(v);
+      if (!v || !Number.isInteger(n)) return { value: null, error: 'Use um número inteiro' };
+      if ((field.min != null && n < field.min) || (field.max != null && n > field.max)) {
+        return { value: n, error: `Entre ${field.min ?? 0} e ${field.max}` };
+      }
+      return { value: n };
+    }
     default:
       return { value: v };
   }
