@@ -423,6 +423,9 @@ a:hover {
    e uma sombra suave no "papel". --d controla a profundidade. */
 .hero__char {
   display: inline-block;
+  /* onda do scroll (GSAP mexe só nestas variáveis; o transform fica livre para a abertura) */
+  translate: 0 calc(var(--wy, 0) * 1%);
+  rotate: calc(var(--wr, 0) * 1deg);
   /* unidade proporcional ao tamanho da letra: o relevo fica igual em qualquer tela */
   --u: calc(var(--d) * 0.0042em);
   text-shadow:

@@ -82,8 +82,16 @@ function signScroll() {
     // As linhas se abrem em direções opostas, como portas de um letreiro
     .fromTo(lines[0]!, { xPercent: 0, yPercent: 0, rotateX: 0 }, { xPercent: -14, yPercent: -14, rotateX: 26, duration: 1 }, 0)
     .fromTo(lines[1]!, { xPercent: 0, yPercent: 0, rotateX: 0 }, { xPercent: 9, yPercent: -4, rotateX: 14, duration: 1 }, 0)
-    // Onda que percorre as letras enquanto rola
-    .to(chars, { keyframes: { yPercent: [0, -16, 0], rotate: [0, -3, 0] }, duration: 0.5, stagger: { each: 0.035, from: 'start' } }, 0)
+    // Onda que percorre as letras enquanto rola. Vai por variáveis CSS (--wy/--wr ligadas
+    // a translate/rotate) e não por transform: a abertura em CSS também mexe no transform,
+    // e se o GSAP lesse a letra no meio da abertura (recarregar com a página rolada, rolar
+    // rápido logo no início) guardaria esse estado torto como "posição normal".
+    .fromTo(
+      chars,
+      { '--wy': 0, '--wr': 0 },
+      { keyframes: { '--wy': [0, -16, 0], '--wr': [0, -3, 0] }, duration: 0.5, stagger: { each: 0.035, from: 'start' } },
+      0,
+    )
     .to(name, { autoAlpha: 0.2, duration: 0.45, ease: 'power1.in' }, 0.55);
 }
 

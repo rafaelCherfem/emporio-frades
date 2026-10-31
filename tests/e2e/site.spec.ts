@@ -213,6 +213,31 @@ test.describe('site público', () => {
     expect(serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual([]);
   });
 
+  test('letreiro não fica torto ao recarregar com a página rolada ou rolar durante a abertura', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'efeito igual; basta no desktop');
+    await fakeSupabase(page);
+    await page.goto('/');
+    // rola e volta enquanto as letras ainda estão subindo
+    await page.waitForTimeout(250);
+    await page.mouse.wheel(0, 500);
+    await page.waitForTimeout(200);
+    await page.mouse.wheel(0, -500);
+    await page.waitForTimeout(2600);
+    const tortas = () =>
+      page.evaluate(() =>
+        [...document.querySelectorAll('.hero__char')].filter((c) => getComputedStyle(c).transform !== 'none').length,
+      );
+    expect(await tortas()).toBe(0);
+    // recarrega no meio do topo (o navegador restaura a rolagem) e sobe
+    await page.evaluate(() => scrollTo(0, 350));
+    await page.waitForTimeout(600);
+    await page.reload();
+    await page.waitForTimeout(2600);
+    await page.mouse.wheel(0, -3000);
+    await page.waitForTimeout(2200);
+    expect(await tortas()).toBe(0);
+  });
+
   test('movimento reduzido: o nome aparece direto, sem animação', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await fakeSupabase(page);
