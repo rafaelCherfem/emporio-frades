@@ -23,6 +23,7 @@ export interface FakeOptions {
   highlights?: Record<string, unknown>[];
   news?: Record<string, unknown>[];
   banners?: Record<string, unknown>[];
+  specialDays?: Record<string, unknown>[];
   settings?: Record<string, unknown>;
 }
 
@@ -64,6 +65,7 @@ export async function fakeSupabase(page: Page, opts: FakeOptions = {}): Promise<
     highlights: opts.highlights ?? [],
     news: opts.news ?? [],
     banners: opts.banners ?? [],
+    special_days: opts.specialDays ?? [],
     store_settings: [{ id: 1, ...baseSettings, ...opts.settings }],
     admins: opts.isAdmin === false ? [] : [{ user_id: ADMIN_ID }],
   };
@@ -184,5 +186,23 @@ export const banner = (over: Record<string, unknown> = {}) => ({
   ends_at: null,
   sort_order: 10,
   published: true,
+  ...over,
+});
+
+/** Data da loja (AAAA-MM-DD) daqui a n dias, para montar feriados relativos a hoje. */
+export const storeDay = (n: number) =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(
+    new Date(Date.now() + n * 86_400_000),
+  );
+
+export const special = (over: Record<string, unknown> = {}) => ({
+  id: crypto.randomUUID(),
+  date: storeDay(3),
+  title: 'Feriado municipal',
+  closed: true,
+  open: '09:00',
+  close: '13:00',
+  note: 'Voltamos no dia seguinte.',
+  notice_days: 7,
   ...over,
 });

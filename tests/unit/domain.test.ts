@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { demoContent as seed, storeSettings } from '../../src/data/seed';
 import { centsToInput, formatBRL, isPromotionActive, parseBRLToCents, splitPrice } from '../../src/lib/format';
-import { groupHours, openStatus } from '../../src/lib/hours';
-import { highlightSchema, parseList, promotionSchema, storeSettingsSchema } from '../../src/lib/schemas';
-import { illustrationFor, promotionList } from '../../src/lib/views';
+import { activeNotices, describeSpecial, groupHours, openStatus, storeDate } from '../../src/lib/hours';
+import { highlightSchema, parseList, promotionSchema, specialDaySchema, storeSettingsSchema, type SpecialDay } from '../../src/lib/schemas';
+import { illustrationFor, promotionList, specialList, specialNotice } from '../../src/lib/views';
 import { toHTML } from '../../src/lib/vnode';
 
 /** Cria uma data a partir do horário de Brasília (UTC-3, sem horário de verão). */
@@ -171,5 +171,75 @@ describe('imagem reserva das garrafas', () => {
     expect(pick('Chegou nova leva de vinhos chilenos', 'Tintos, brancos e rosés')).toBe('tinto');
     expect(pick('Novidade da semana', 'Chegaram cervejas artesanais')).toBe('cerveja');
     expect(pick('Promoção', null)).toBe('tinto');
+  });
+});
+
+describe('feriados e datas especiais', () => {
+  const hours = storeSettings.hours; // seg–sex 9h–19h, sáb 9h–18h, dom fechado
+  const sp = (over: Partial<SpecialDay>): SpecialDay => ({
+    id: 'seed-x', date: '2026-12-25', title: 'Natal', closed: true, open: '09:00', close: '13:00', note: '', notice_days: 7, ...over,
+  });
+  const natal = sp({});
+  const vespera = sp({ id: 'seed-v', date: '2026-12-24', title: 'Véspera de Natal', closed: false, open: '09:00', close: '14:00' });
+
+  it('no feriado fechado, avisa o motivo e quando reabre', () => {
+    // 25/12/2026 é sexta; sábado abre normalmente
+    expect(openStatus(hours, brt('2026-12-25T10:00:00'), [natal]).label).toBe('Fechado hoje (Natal), abre amanhã às 9h');
+  });
+
+  it('na véspera à noite, pula o feriado', () => {
+    expect(openStatus(hours, brt('2026-12-24T19:30:00'), [natal]).label).toBe('Fechado, abre sábado às 9h');
+  });
+
+  it('horário reduzido: fecha mais cedo e diz por quê', () => {
+    expect(openStatus(hours, brt('2026-12-24T13:00:00'), [vespera, natal])).toEqual({
+      open: true,
+      label: 'Aberto agora, fecha às 14h (Véspera de Natal)',
+    });
+    expect(openStatus(hours, brt('2026-12-24T15:00:00'), [vespera, natal]).label).toBe('Fechado, abre sábado às 9h');
+  });
+
+  it('sem data especial, nada muda', () => {
+    expect(openStatus(hours, brt('2026-12-25T10:00:00'), []).label).toBe('Aberto agora, fecha às 19h');
+  });
+
+  it('fechado por vários dias aponta a data da volta', () => {
+    const ferias = Array.from({ length: 10 }, (_, i) => sp({ id: `seed-f${i}`, date: storeDate(brt('2027-01-02T12:00:00'), i), title: 'Férias' }));
+    expect(openStatus(hours, brt('2027-01-02T10:00:00'), ferias).label).toBe('Fechado hoje (Férias), abre dia 12/01 às 9h');
+  });
+
+  it('o aviso aparece só dentro da antecedência escolhida', () => {
+    expect(activeNotices([natal], brt('2026-12-17T10:00:00'))).toHaveLength(0); // faltam 8 dias
+    expect(activeNotices([natal], brt('2026-12-18T10:00:00'))).toHaveLength(1); // faltam 7
+    expect(activeNotices([sp({ notice_days: 0 })], brt('2026-12-24T23:00:00'))).toHaveLength(0);
+    expect(activeNotices([sp({ notice_days: 0 })], brt('2026-12-25T08:00:00'))).toHaveLength(1);
+    expect(activeNotices([natal], brt('2026-12-26T10:00:00'))).toHaveLength(0); // já passou
+  });
+
+  it('descreve quando e o que muda', () => {
+    expect(describeSpecial(natal, brt('2026-12-20T10:00:00'))).toEqual({ when: 'Sexta, 25 de dezembro', what: 'Loja fechada' });
+    expect(describeSpecial(natal, brt('2026-12-24T10:00:00')).when).toBe('Amanhã');
+    expect(describeSpecial(vespera, brt('2026-12-24T10:00:00'))).toEqual({ when: 'Hoje', what: 'Aberto das 9h às 14h' });
+  });
+
+  it('texto do dono aparece como texto, nunca como HTML', () => {
+    const evil = sp({ title: '<img src=x onerror=alert(1)>', note: '<script>x</script>' });
+    const html = toHTML(specialNotice([evil], brt('2026-12-24T10:00:00')));
+    expect(html).not.toContain('<img');
+    expect(html).not.toContain('<script');
+    expect(html).toContain('&lt;img');
+  });
+
+  it('lista em "Onde estamos" mostra as próximas, em ordem', () => {
+    const html = toHTML(specialList([natal, vespera], brt('2026-12-01T10:00:00')));
+    expect(html.indexOf('Véspera de Natal')).toBeLessThan(html.indexOf('>Natal<'));
+    expect(html).toContain('9h às 14h');
+  });
+
+  it('schema recusa horário igual e antecedência fora do limite', () => {
+    expect(specialDaySchema.safeParse(sp({ closed: false, open: '10:00', close: '10:00' })).success).toBe(false);
+    expect(specialDaySchema.safeParse(sp({ notice_days: 90 })).success).toBe(false);
+    expect(specialDaySchema.safeParse(sp({ date: '25/12/2026' })).success).toBe(false);
+    expect(specialDaySchema.safeParse(natal).success).toBe(true);
   });
 });

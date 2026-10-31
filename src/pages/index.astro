@@ -35,6 +35,7 @@ const content: SiteContent = cfg.enabled
       highlights: live?.highlights ?? [...emptyLists.highlights],
       news: live?.news ?? [...emptyLists.news],
       banners: live?.banners ?? [...emptyLists.banners],
+      specialDays: live?.specialDays ?? [...emptyLists.specialDays],
     }
   : demoContent;
 
@@ -77,6 +78,16 @@ const jsonLd = {
       opens: h.open,
       closes: h.close,
     })),
+  // Feriados programados pelo dono (o Google usa para mostrar o horário certo)
+  specialOpeningHoursSpecification: content.specialDays.length
+    ? content.specialDays.map((d) => ({
+        '@type': 'OpeningHoursSpecification',
+        validFrom: d.date,
+        validThrough: d.date,
+        opens: d.closed ? '00:00' : d.open,
+        closes: d.closed ? '00:00' : d.close,
+      }))
+    : undefined,
   sameAs: [links.instagram, links.facebook, links.tiktok].filter(Boolean),
 };
 
@@ -144,6 +155,7 @@ const gores = Array.from({ length: 44 }, (_, i) => i);
         <p class="hero__tagline" data-bind="tagline">{s.tagline}</p>
         <div class="hero__aside">
           <p class="status" data-status hidden></p>
+          <div class="notice" data-notice role="note" aria-label="Aviso de horário" hidden></div>
           <p class="hero__address">
             <span data-bind="address1">{addr1}</span>
             {addr2 && <span>, </span>}
@@ -275,6 +287,10 @@ const gores = Array.from({ length: 44 }, (_, i) => i);
             <div class="hours">
               <h3 class="hours__title">Horário de funcionamento</h3>
               <ul data-list="hours" set:html={toHTML(hoursList(s, env))} />
+              <div class="specials" data-specials hidden>
+                <h4 class="hours__subtitle">Feriados e datas especiais</h4>
+                <ul data-list="specials"></ul>
+              </div>
             </div>
 
             <div class="contacts">

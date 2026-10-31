@@ -560,6 +560,76 @@ a:hover {
   color: var(--ink-2);
 }
 
+/* Aviso de feriado: um comunicado de loja, aparece sozinho alguns dias antes */
+.notice {
+  display: grid;
+  gap: 0.6rem;
+  width: min(100%, 27rem);
+}
+
+.notice__item {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.85rem 1.1rem 0.95rem;
+  background:
+    linear-gradient(rgb(255 255 255 / 0.55), rgb(255 255 255 / 0.55)),
+    #f7efd6;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--wine);
+  border-radius: var(--radius-s);
+  box-shadow: 0 14px 26px -20px rgb(23 32 27 / 0.6);
+}
+
+.notice__item[data-state='reduced'] {
+  border-left-color: var(--copper-ink);
+}
+
+.notice__when {
+  font-family: var(--font-display);
+  font-size: var(--step--1);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wine);
+}
+
+.notice__item[data-state='reduced'] .notice__when {
+  color: var(--copper-ink);
+}
+
+.notice__title {
+  font-family: var(--font-serif);
+  font-size: var(--step-1);
+  font-weight: 650;
+  line-height: 1.15;
+}
+
+.notice__what {
+  font-weight: 600;
+}
+
+.notice__note {
+  color: var(--ink-2);
+  font-size: var(--step--1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .notice:not([hidden]) .notice__item {
+    animation: notice-in 0.8s var(--ease-out) 1.1s backwards;
+  }
+
+  .notice:not([hidden]) .notice__item + .notice__item {
+    animation-delay: 1.25s;
+  }
+}
+
+@keyframes notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) rotate(-1.5deg);
+  }
+}
+
 @media (max-width: 760px) {
   .hero__base {
     grid-template-columns: 1fr;
@@ -1793,6 +1863,31 @@ a:hover {
   content: ' (hoje)';
   font-weight: 500;
   color: var(--wine);
+}
+
+.hours__subtitle {
+  margin-top: 1.5rem;
+  margin-bottom: 0.25rem;
+  font-family: var(--font-display);
+  font-size: var(--step--1);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--copper-ink);
+}
+
+.hours__row--special .hours__days {
+  display: grid;
+}
+
+.hours__row--special small {
+  color: var(--ink-2);
+  font-size: var(--step--1);
+}
+
+.hours__row--special[data-state='closed'] .hours__time {
+  color: var(--wine);
+  font-weight: 600;
 }
 
 .contacts {

@@ -1,5 +1,5 @@
 import { formatBRL, formatDateLong, isPromotionActive, splitPrice, validityLabel } from './format';
-import { groupHours, storeClock } from './hours';
+import { activeNotices, describeSpecial, groupHours, storeClock, upcomingSpecials } from './hours';
 import {
   facebookHref,
   formatBrPhone,
@@ -13,7 +13,7 @@ import {
   whatsappHref,
 } from './safe';
 import { asset } from './paths';
-import type { Banner, Highlight, News, Promotion, StoreSettings } from './schemas';
+import type { Banner, Highlight, News, Promotion, SpecialDay, StoreSettings } from './schemas';
 import { h, type VNode } from './vnode';
 
 /**
@@ -251,6 +251,40 @@ export function hoursList(s: StoreSettings, env: ViewEnv): VNode[] {
       h('span', { class: 'hours__time' }, g.time),
     ),
   );
+}
+
+/* Datas especiais (feriados, horário diferente) */
+
+/** Aviso do topo: só as datas dentro da antecedência escolhida pelo dono (no máximo duas). */
+export function specialNotice(list: SpecialDay[], now = new Date()): VNode[] {
+  return activeNotices(list, now)
+    .slice(0, 2)
+    .map((s) => {
+      const { when, what } = describeSpecial(s, now);
+      return h(
+        'p',
+        { class: 'notice__item', 'data-state': s.closed ? 'closed' : 'reduced', 'data-id': s.id },
+        h('time', { class: 'notice__when', datetime: s.date }, when),
+        h('strong', { class: 'notice__title' }, s.title),
+        h('span', { class: 'notice__what' }, what),
+        s.note ? h('span', { class: 'notice__note' }, s.note) : null,
+      );
+    });
+}
+
+/** Lista em "Onde estamos": as próximas datas especiais programadas. */
+export function specialList(list: SpecialDay[], now = new Date()): VNode[] {
+  return upcomingSpecials(list, now)
+    .slice(0, 6)
+    .map((s) => {
+      const { when, what } = describeSpecial(s, now);
+      return h(
+        'li',
+        { class: 'hours__row hours__row--special', 'data-state': s.closed ? 'closed' : 'reduced', 'data-id': s.id },
+        h('span', { class: 'hours__days' }, h('time', { datetime: s.date }, when), h('small', {}, s.title)),
+        h('span', { class: 'hours__time' }, s.closed ? 'Fechado' : what.replace('Aberto das ', '')),
+      );
+    });
 }
 
 /* Endereço */

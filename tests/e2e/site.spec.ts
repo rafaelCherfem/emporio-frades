@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { banner, fakeSupabase, promo } from './fake-supabase';
+import { banner, fakeSupabase, promo, special, storeDay } from './fake-supabase';
 
 /** Junta erros de JS e violações de CSP para falhar o teste se aparecerem. */
 function watchErrors(page: Page) {
@@ -174,6 +174,40 @@ test.describe('site público', () => {
     await expect(card.locator('.product__media img')).toHaveAttribute('src', /garrafas\/espumante\.webp$/);
     await expect(card.locator('.product__price')).toContainText(/79,90/);
     await expect(card.locator('.product__cta')).toHaveAttribute('href', /^https:\/\/wa\.me\//);
+  });
+
+  test('feriado programado: aviso no topo dentro da antecedência e lista em "Onde estamos"', async ({ page }) => {
+    await fakeSupabase(page, {
+      specialDays: [
+        special({ title: 'Feriado municipal', date: storeDay(3) }),
+        special({ title: 'Natal lá na frente', date: storeDay(40), notice_days: 7 }),
+      ],
+    });
+    await page.goto('/');
+    const notice = page.locator('[data-notice]');
+    await expect(notice).toBeVisible();
+    // só o que está dentro dos 7 dias aparece no aviso
+    await expect(notice.locator('.notice__item')).toHaveCount(1);
+    await expect(notice).toContainText('Feriado municipal');
+    await expect(notice).toContainText('Loja fechada');
+    await expect(notice).toContainText('Voltamos no dia seguinte.');
+    // a lista mostra todas as próximas
+    await expect(page.locator('[data-list="specials"] li')).toHaveCount(2);
+  });
+
+  test('hoje é feriado: o status diz fechado e o motivo', async ({ page }) => {
+    await fakeSupabase(page, { specialDays: [special({ title: 'Inventário', date: storeDay(0), notice_days: 0 })] });
+    await page.goto('/');
+    await expect(page.locator('[data-status]')).toHaveText(/^Fechado hoje \(Inventário\), abre /);
+    await expect(page.locator('[data-notice]')).toContainText('Hoje');
+  });
+
+  test('sem datas especiais, aviso e lista ficam escondidos', async ({ page }) => {
+    await fakeSupabase(page);
+    await page.goto('/');
+    await expect(page.locator('[data-bind="tagline"]')).toHaveText('Frase vinda do banco.');
+    await expect(page.locator('[data-notice]')).toBeHidden();
+    await expect(page.locator('[data-specials]')).toBeHidden();
   });
 
   test('mapa só carrega depois do clique', async ({ page }) => {

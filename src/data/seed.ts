@@ -1,3 +1,4 @@
+import { storeDate } from '../lib/hours';
 import type { SiteContent, StoreSettings } from '../lib/schemas';
 
 /**
@@ -62,6 +63,9 @@ export const demoContent: SiteContent = {
     { id: 'seed-hl-6', name: 'Taça de cristal para tinto', description: 'Vendida avulsa ou em caixa com seis.', category: 'Acessórios', price_cents: 3900, unit: 'un', image_path: null, image_alt: '', sort_order: 6, published: true },
   ],
   banners: [],
+  specialDays: [
+    { id: 'seed-special-1', date: storeDate(new Date(), 5), title: 'Feriado (exemplo)', closed: true, open: '09:00', close: '13:00', note: 'Voltamos no dia seguinte, no horário normal.', notice_days: 7 },
+  ],
   news: [
     { id: 'seed-news-1', title: 'Chegou nova leva de vinhos chilenos', body: 'Tintos, brancos e rosés que ainda não tínhamos na loja. Passe para conhecer.', published_at: inDays(-2), image_path: null, image_alt: '', published: true },
     { id: 'seed-news-2', title: 'Kits de presente sob encomenda', body: 'Monte o seu com vinho, espumante, taças e caixa de madeira. Ligue para encomendar.', published_at: inDays(-9), image_path: null, image_alt: '', published: true },
@@ -69,4 +73,4 @@ export const demoContent: SiteContent = {
 };
 
 /** Com o banco configurado, as listas começam vazias (nada de preço fictício). */
-export const emptyLists = { promotions: [], highlights: [], news: [], banners: [] } as const;
+export const emptyLists = { promotions: [], highlights: [], news: [], banners: [], specialDays: [] } as const;

@@ -7,6 +7,7 @@ import {
   newsSchema,
   bannerSchema,
   parseList,
+  specialDaySchema,
   promotionSchema,
   storeSettingsSchema,
   type SiteContent,
@@ -21,6 +22,8 @@ import {
   newsCards,
   promotionList,
   socialList,
+  specialList,
+  specialNotice,
   type ContactLinks,
 } from '../lib/views';
 import { mount } from '../lib/vnode';
@@ -46,6 +49,7 @@ function readInitial(): SiteContent | null {
       highlights: parseList(highlightSchema, raw?.highlights),
       news: parseList(newsSchema, raw?.news),
       banners: parseList(bannerSchema, raw?.banners),
+      specialDays: parseList(specialDaySchema, raw?.specialDays),
     };
   } catch {
     return null;
@@ -112,15 +116,32 @@ function applySettings(s: StoreSettings) {
   renderStatus(s);
 }
 
+const specials = () => content?.specialDays ?? [];
+
 function renderHours(s: StoreSettings) {
   const list = $('[data-list="hours"]');
   if (list) mount(list, hoursList(s, { supabaseUrl: cfg.supabaseUrl, now: new Date() }));
+
+  // Datas especiais programadas (feriados, horário diferente)
+  const box = $('[data-specials]');
+  const sp = specialList(specials(), new Date());
+  const spList = $('[data-list="specials"]');
+  if (spList) mount(spList, sp);
+  if (box) box.hidden = sp.length === 0;
+
+  // Aviso no topo, alguns dias antes (a antecedência é o dono quem escolhe)
+  const notice = $('[data-notice]');
+  if (notice) {
+    const items = specialNotice(specials(), new Date());
+    mount(notice, items);
+    notice.hidden = items.length === 0;
+  }
 }
 
 function renderStatus(s: StoreSettings) {
   const el = $('[data-status]');
   if (!el) return;
-  const st = openStatus(s.hours);
+  const st = openStatus(s.hours, new Date(), specials());
   el.textContent = st.label;
   el.dataset['state'] = st.open ? 'open' : 'closed';
   el.hidden = false;
@@ -295,6 +316,7 @@ export async function initSite() {
     highlights: live.highlights ?? content.highlights,
     news: live.news ?? content.news,
     banners: live.banners ?? content.banners,
+    specialDays: live.specialDays ?? content.specialDays,
   };
   applySettings(content.settings);
   renderLists(content);
